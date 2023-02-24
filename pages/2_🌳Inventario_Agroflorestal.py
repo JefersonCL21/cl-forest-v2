@@ -748,8 +748,8 @@ if page == 'Sucupira Agroflorestas':
                 plantios = novo_df.groupby(['TPF', 'Talhao'])['Novo_TPF'].mean()
                 plantios_df= plantios.reset_index()
 
-                plantios_df1 = plantios_df
-
+                plantios_df1 = plantios_df.copy()
+               
                 teste = []
                 producao = []
                 producaoFruto = []
@@ -760,7 +760,8 @@ if page == 'Sucupira Agroflorestas':
 
                 for h in range(horizonte):
                     for i, row in plantios_df1.iterrows():
-                        TPF, qntdade, talhao = row['TPF'], row['Novo_TPF'], row['Talhao']
+                        TPF, qntdade, talhao = int(row['TPF']), int(row['Novo_TPF']), row['Talhao']
+                        print(TPF)                        
                         if TPF > 0:
                             producao.append(qntdade * 0 *quilosPlanta)
                             Data.append(anoInventario + h)
@@ -932,7 +933,7 @@ if page == 'Sucupira Agroflorestas':
 
                 for h in range(horizonte):
                     for i, row in plantios_df1.iterrows():
-                        TPF, qntdade, talhao = row['TPF'], row['Novo_TPF'], row['Talhao']
+                        TPF, qntdade, talhao = int(row['TPF']), int(row['Novo_TPF']), row['Talhao']
                         if TPF > 0:
                             producao.append(qntdade * 0 *cacau_quilosPlanta)
                             Data.append(anoInventario + h)
@@ -1104,7 +1105,7 @@ if page == 'Sucupira Agroflorestas':
 
                 for h in range(horizonte):
                     for i, row in plantios_df1.iterrows():
-                        TPF, qntdade, talhao = row['TPF'], row['Novo_TPF'], row['Talhao']
+                        TPF, qntdade, talhao = int(row['TPF']), int(row['Novo_TPF']), row['Talhao']
                         if TPF > 0:
                             producao.append(qntdade * 0 *cup_quilosPlanta)
                             Data.append(anoInventario + h)
