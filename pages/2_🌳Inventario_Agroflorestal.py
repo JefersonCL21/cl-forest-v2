@@ -11,6 +11,7 @@ import shapefile as shp
 import folium 
 import pyproj
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 import json
 import plotly.express as px
 from streamlit_metrics import metric, metric_row
@@ -21,7 +22,9 @@ import importarDados
 import gerarMapa
 import streamlit as st
 from dateutil.rrule import rrule, YEARLY
-import pickle
+import io
+import datetime
+
 
 
 st.set_page_config(
@@ -91,10 +94,17 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 #importar dados do excel de inventário
 @st.cache(allow_output_mutation=True)
 def carregarDados():    
-    df = pd.read_csv("dados/GERAL_V2.csv")
-    
+    df = pd.read_csv("dados/GERAL_V2.csv")  
+
     return df 
 df = carregarDados()
+
+@st.cache(allow_output_mutation=True)
+def carregarDados_DAP_HT():    
+    df = pd.read_csv("dados/CRESCIMENTO_DAP_HT.csv")  
+
+    return df 
+dfCrescimento_DAP_HT = carregarDados_DAP_HT()
 
 polygon = importarDados.carregarDadosSHP()
 map_df = polygon
@@ -103,9 +113,11 @@ map_df.to_crs(pyproj.CRS.from_epsg(4326), inplace=True)
 page = st.sidebar.selectbox('Escolha uma propriedade',['Sucupira Agroflorestas','Regenera'])
 
 if page == 'Sucupira Agroflorestas':
-    col1, col2= st.columns(2)
+    col1, col2, col3= st.columns(3)
+
+
     with col1:
-        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias'), horizontal=False)
+        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP'), horizontal=False)
 
     with col2:
         if Uso == 'Inventário resumido':
@@ -116,8 +128,11 @@ if page == 'Sucupira Agroflorestas':
         elif Uso == 'Frutíferas':
             Variavel = st.sidebar.radio('Variável analisada', ('TPF', 'Fenofase', 'Vigor'), horizontal=False)
 
-        else:
+        elif Uso == 'Especiárias':
             Variavel = st.sidebar.radio('Variável analisada', ('Fenofase', 'Vigor'), horizontal=False)
+
+        else:
+            pass
 
     Subcol1, Subcol2= st.columns(2)
     
@@ -340,8 +355,6 @@ if page == 'Sucupira Agroflorestas':
             #fig2.update_layout(plot_bgcolor="#FFFAFA")
                                                                         
             st.plotly_chart(fig2, use_container_width=True)            
-          
-           
             
             
 
@@ -514,13 +527,13 @@ if page == 'Sucupira Agroflorestas':
 
             # Remova a coluna 'AB' do dataframe de saída
             dadosBar2 = dadosBar2[['classe', 'n', 'ordem']]        
-                       
-            
+
             fig2 = px.bar(dadosBar2, x='classe', y='n')
             fig2.update_traces(marker_color="#1D250E")
             #fig2.update_layout(plot_bgcolor="#FFFAFA")
                                                                         
             st.plotly_chart(fig2, use_container_width=True)  
+
 
         st.markdown(
             '<hr style="border-top: 0.5px solid "#1D250E";">',
@@ -575,6 +588,24 @@ if page == 'Sucupira Agroflorestas':
 
             
             gerarMapa.gerarMapa(map_df = map_df)
+        st.markdown(
+            '<hr style="border-top: 0.5px solid "#1D250E";">',
+            unsafe_allow_html=True
+        )
+
+        m1, m2, m3, m4, m5 = st.columns((1,1,1,1,1))
+        m1.write('')
+        m2.metric(label ='Volume total (m³)',value = round(plantios["Volume"].sum(),2))
+        m3.metric(label ='Volume médio por talhão (m³)',value = round(plantios["Volume"].sum()/len(plantios["Talhao"].unique()),2))
+        delta1 = round((round(plantios.loc[plantios['Talhao'].isin(column_name)]["Volume"].sum(),2) - round(plantios["Volume"].sum()/len(plantios["Talhao"].unique()),2)),2)
+        m4.metric(label = 'Volume do talhão selecionado (m³)',value =round(plantios.loc[plantios['Talhao'].isin(column_name)]["Volume"].sum(),2), delta = delta1)
+        
+        m1.write('')
+
+        st.markdown(
+            '<hr style="border-top: 0.5px solid "#1D250E";">',
+            unsafe_allow_html=True
+        )
 
 
         with vol_hist_col2:
@@ -627,21 +658,336 @@ if page == 'Sucupira Agroflorestas':
             fig2.update_traces(marker_color="#1D250E")
             #fig2.update_layout(plot_bgcolor="#FFFAFA")
                                                                         
-            st.plotly_chart(fig2, use_container_width=True)    
+            st.plotly_chart(fig2, use_container_width=True)
+
+            
+        st.markdown('<h1>Simulação de produção, desbastes e receitas</h1>', unsafe_allow_html=True)
+
+
+        with st.expander(' ', expanded=True):
+
+
+            parametros_tab, sucupira_tab = st.tabs(["Simulção", "Sucupira"])
+
+            with parametros_tab:
+                if parametros_tab:
+                    colunasDesbastes1,  colunasDesbastes2 = st.columns(2)
+                    with colunasDesbastes1:
+                        #Dados de crescimento e projeção
+                        listaEspeciesCrescimento_DAP_HT = dfCrescimento_DAP_HT['Especie'].unique()
+
+                        especie_Crescimento_DAP_HT = st.multiselect(
+                            'Escolha uma espécie', listaEspeciesCrescimento_DAP_HT, ['Khaya grandifoliola']
+                            )
+                        
+                        cicloCorte = int(st.number_input("Ciclo de corte?", min_value=16, max_value=30, value=20))            
+                                        
+                    with colunasDesbastes2:
+                        FF1 = float(st.number_input("Fator de forma ", value=0.5, help="Escolha um fator de forma.",  min_value=0.1))
+
+                        precoMadeira = float(st.number_input("Preço da madeira (R$/m³) ", value=2500.0, help="Escolha o preço da madeira.",  min_value=1000.0))
+                        
+                        densidadeInicial = int(st.number_input("Densidade incial?", min_value=0, max_value=1800, value=400))
+
+                    def desbastes():
+                        # Perguntar ao usuário quantos desbastes serão realizados
+                        with colunasDesbastes1:
+                            num_desbastes = st.number_input("Quantos desbastes serão realizados?", min_value=1, max_value=3, value=1)
+
+                        # Criar a sequência de colunas e controles deslizantes para cada desbaste
+                        colunas_desbaste = [st.columns(3) for _ in range(num_desbastes)]
+
+                        desbastes = []
+                        for i, (col_ano, col_intensidade, colPrecoProduto) in enumerate(colunas_desbaste):
+                            # Adicionar um controle deslizante para o ano do desbaste
+                            with col_ano:
+                                ano_val = st.number_input(f"Ano do desbaste {i+1}", min_value=1, max_value=30, value=9)
+
+                            # Adicionar um controle deslizante para a intensidade do desbaste
+                            with col_intensidade:
+                                intensidade_val = st.slider(f"Intensidade do desbaste {i+1}", 0.0, 1.0, .5)
+
+                            with colPrecoProduto:
+                                Preco_produto = float(st.number_input(f"Preço do produto do desbaste {i+1} (R$/m³)?", min_value=0.00, max_value=5000.00, value=100.00))
+
+                            # Adicionar os valores do desbaste à lista
+                            desbastes.append((ano_val, intensidade_val, Preco_produto))
+                        
+                            
+
+                        # Imprimir os valores selecionados pelo usuário para cada desbaste
+                        for i, (ano_val, intensidade_val, Preco_produto) in enumerate(desbastes):
+                            st.write(f"Desbaste {i+1}: ano={ano_val}, intensidade={intensidade_val}")
+
+                        return desbastes
+
+                    desbastes = desbastes()
+
+
+                for i, (ano_val, intensidade_val, Preco_produto) in enumerate(desbastes):
+                    # Calcular o volume para os dados de crescimento em altura e DAP
+                    dfCrescimento_DAP_HT["Volume"] = FF1 * dfCrescimento_DAP_HT["HT_Est"] * dfCrescimento_DAP_HT['DAP'].transform(lambda x: x **2 * np.pi / 40000)
+                    dfCrescimento_DAP_HT["VolumeDesbastado"] = dfCrescimento_DAP_HT["Volume"].copy()
+                    dfCrescimento_DAP_HT["Produto"] = " "
+                    dfCrescimento_DAP_HT["precoProduto"] = dfCrescimento_DAP_HT["Volume"] 
+                    # adiciona uma coluna "Volume" ao dataframe        
+
+                    # multiplica o volume por densidadeInicial ou 200 dependendo da idade
+                    if(i==0):
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < ano_val, 'Volume'] *= densidadeInicial
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Volume'] *= densidadeInicial * (1 - intensidade_val)
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < ano_val, 'VolumeDesbastado'] *= 0
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'VolumeDesbastado'] *= densidadeInicial * intensidade_val
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'precoProduto'] *= densidadeInicial * (intensidade_val) * Preco_produto
+                        
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Produto'] = f"Desbaste {i+1}"
+
+                    elif(i==1):
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0], 'Volume'] *= densidadeInicial
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'Volume'] *= densidadeInicial * (1 - desbastes[i-1][1])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Volume'] *= densidadeInicial* (1 - desbastes[i-1][1]) * (1 - intensidade_val)
+
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0], 'VolumeDesbastado'] *= 0
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'VolumeDesbastado'] *= densidadeInicial * (desbastes[i-1][1])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'VolumeDesbastado'] *= densidadeInicial* (1 - desbastes[i-1][1]) * (intensidade_val)
+
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'precoProduto'] *= densidadeInicial * (desbastes[i-1][1])* (desbastes[i-1][2])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'precoProduto'] *= densidadeInicial* (1 - desbastes[i-1][1]) * (intensidade_val)* Preco_produto
+
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'Produto'] = f"Desbaste {i}"
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Produto'] = f"Desbaste {i+1}"
+                                        
+                    else:
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < desbastes[i-2][0], 'Volume'] *= densidadeInicial
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-2][0]) & (dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0]), 'Volume'] *= densidadeInicial * (1 - desbastes[i-2][1])
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'Volume'] *= densidadeInicial * (1 - desbastes[i-2][1])* (1 - desbastes[i-1][1])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Volume'] *= densidadeInicial * (1 - desbastes[i-2][1])* (1 - desbastes[i-1][1]) * (1 - intensidade_val)
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < desbastes[i-2][0], 'VolumeDesbastado'] *= 0
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-2][0]) & (dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0]), 'VolumeDesbastado'] *= densidadeInicial * (desbastes[i-2][1])
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'VolumeDesbastado'] *= densidadeInicial * (desbastes[i-2][1])* (desbastes[i-1][1])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'VolumeDesbastado'] *= densidadeInicial * (desbastes[i-2][1])* (desbastes[i-1][1]) * (intensidade_val)
+
+
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] < desbastes[i-2][0], 'VolumeDesbastado'] *= 0
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-2][0]) & (dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0]), 'precoProduto'] *= densidadeInicial * (desbastes[i-2][1])* (desbastes[i-2][2])
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'precoProduto'] *= densidadeInicial * (desbastes[i-2][1])* (desbastes[i-1][1])* (desbastes[i-1][2])
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'precoProduto'] *= densidadeInicial * (desbastes[i-2][1])* (desbastes[i-1][1]) * (intensidade_val) * Preco_produto
+
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-2][0]) & (dfCrescimento_DAP_HT['idade'] < desbastes[i-1][0]), 'Produto'] = f"Desbaste {i-1}"
+                        dfCrescimento_DAP_HT.loc[(dfCrescimento_DAP_HT['idade'] >= desbastes[i-1][0]) & (dfCrescimento_DAP_HT['idade'] < ano_val), 'Produto'] = f"Desbaste {i}"
+                        dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['idade'] >= ano_val, 'Produto'] = f"Desbaste {i+1}"
+                    
+
+                
+                dfCrescimento_DAP_HT1 = dfCrescimento_DAP_HT.loc[dfCrescimento_DAP_HT['Especie'].isin(especie_Crescimento_DAP_HT)]
+                dfCrescimento_DAP_HT1 = dfCrescimento_DAP_HT1.loc[dfCrescimento_DAP_HT1['idade'] <= cicloCorte]
+
+                dfDesbaste_DAP_HT = dfCrescimento_DAP_HT1.loc[dfCrescimento_DAP_HT['idade'].isin([desbastes[i][0] for i, _ in enumerate(desbastes)])]
+                dfCorteRaso_DAP_HT1 = dfCrescimento_DAP_HT1.loc[dfCrescimento_DAP_HT1['idade'].isin([cicloCorte])]
+                dfCorteRaso_DAP_HT1["Produto"] = "Corte raso"
+                dfCorteRaso_DAP_HT1["precoProduto"] = dfCorteRaso_DAP_HT1["Volume"] * precoMadeira
+                dfCorteRaso_DAP_HT1["VolumeDesbastado"] = dfCorteRaso_DAP_HT1["Volume"]
+
+
+                df_Multiprodutos =  pd.concat([dfDesbaste_DAP_HT, dfCorteRaso_DAP_HT1], axis=0)
+                        
+                col_grafico1, col_grafico2 = st.columns(2)
+                
+                # Criar subplots
+                fig = make_subplots(specs=[[{"secondary_y": False}]])
+
+                # Adicionar linha do DAP
+                fig.add_trace(go.Scatter(x=dfCrescimento_DAP_HT1['idade'], y=dfCrescimento_DAP_HT1['Volume'], mode="lines", name="Volume"), secondary_y=False)
+
+                # Atualizar eixos
+                fig.update_xaxes(title_text="Idade (anos)")
+                fig.update_yaxes(title_text="Volume (m³)", secondary_y=False)
+                fig.update_yaxes(title_text="Volume (m³)", secondary_y=True)
+
+                # Atualizar layout
+                fig.update_layout(title="Simulação de desbaste", showlegend=True)
+
+                fig2 = px.bar(df_Multiprodutos, x='Produto', y='precoProduto', title='Receita bruta')
+
+                # Mostrar gráfico
+                with col_grafico1:
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig2, use_container_width=True)
+                
+                fig3 = px.pie(df_Multiprodutos, values='VolumeDesbastado', names='Produto')
+
+                with col_grafico2:
+                    st.plotly_chart(fig3, use_container_width=True)    
+
+                    fig4 = go.Figure(data=[go.Table(
+                            header=dict(values= ['Produto', 'VolumeDesbastado', 'precoProduto'],
+                                        fill_color="#1D250E",
+                                        font_color="white",
+                                        align='center'),
+                            cells=dict(values=[df_Multiprodutos['Produto'], round(df_Multiprodutos['VolumeDesbastado'], 2), round(df_Multiprodutos['precoProduto'], 2)],
+                                    fill_color='lavender',
+                                    align='center'))
+                                                ])
+
+                    st.plotly_chart(fig4, use_container_width=True)
+
+                    @st.cache
+                    def convert_df(df):
+                        # IMPORTANT: Cache the conversion to prevent computation on every rerun
+                        return df.to_csv().encode('utf-8')
+
+                    csv2 = convert_df(df_Multiprodutos)
+                    st.download_button(
+                        label="Download - CSV",
+                        data=csv2,
+                        file_name='ReceitaMultiprodutos.csv',
+                        mime='text/csv',
+                    )         
+
+            with sucupira_tab:
+
+                especiesReceitaMadeireiras = ['Khaya grandifoliola', 'Cariniana legalis', 'Dalbergia nigra', 'Handroanthus serratifolius', 'Khaya ivorensis', 'Plathymenia reticulata']
+                intensidade_padrao = {'Khaya grandifoliola': 0.3, 'Cariniana legalis': 0.1, 'Dalbergia nigra': 0.45, 'Handroanthus serratifolius': 0.1, 'Khaya ivorensis': 0.3, 'Plathymenia reticulata': 0.3}
+                preco_padrao = {'Khaya grandifoliola': 2000.00, 'Cariniana legalis': 2000.00, 'Dalbergia nigra': 5000.00, 'Handroanthus serratifolius': 2500.00, 'Khaya ivorensis': 2000.00, 'Plathymenia reticulata': 2000.00}
+                ciclo_corte_padrao = {'Khaya grandifoliola': 20, 'Cariniana legalis': 35, 'Dalbergia nigra': 45, 'Handroanthus serratifolius': 45, 'Khaya ivorensis': 20, 'Plathymenia reticulata': 30}
+                Volume_padrao = {'Khaya grandifoliola': 0.8, 'Cariniana legalis': 1.0, 'Dalbergia nigra': 0.6, 'Handroanthus serratifolius': 0.7, 'Khaya ivorensis': 0.8, 'Plathymenia reticulata': 0.7}
+
+                if sucupira_tab:
+
+                    @st.cache(allow_output_mutation=True)
+                    def carregarDados1():    
+                        df = pd.read_csv("dados/dadosReceitaMadeira.csv")  
+
+                        return df 
+                    dadosReceitaMadeira = carregarDados1()
+
+                    colParemetros1 = st.multiselect(
+                            'Espécies', especiesReceitaMadeireiras, ['Khaya grandifoliola']
+                            )
+
+                    num_desbastesSucupira = 1 #int(st.number_input(" ", min_value=1, max_value=1, value=1))
+                    colunas_desbaste = [st.columns(4) for _ in range(num_desbastesSucupira)]
+
+                    
+
+                    valores_por_especie = {}  # Crie um dicionário vazio para armazenar os valores para cada espécie
+
+                    for j in colParemetros1:
+                        valores_por_especie[j] = {}  # Crie um novo dicionário para a espécie atual
+                        for i, (col_ano1, col_intensidade1, colPrecoProduto, colVolumeMadeira) in enumerate(colunas_desbaste):
+                            with col_ano1:
+                                ciclo_corte = int(st.number_input(f"Ciclo de corte (anos)? {j}", min_value=5, max_value=70, value=ciclo_corte_padrao[j]))
+                                valores_por_especie[j]['Ciclo de Corte'] = ciclo_corte
+                            with col_intensidade1:
+                                intensidade_val1 = st.slider(f"Intensidade do desbaste? {j}", 0.0, 1.0, intensidade_padrao[j])
+                                # Aqui você deve substituir 'Nome da coluna' pelo nome real da coluna
+                                valores_por_especie[j]['Desbastes'] = intensidade_val1
+                            with colPrecoProduto:
+                                Preco_produto = float(st.number_input(f"Preço(R$/m³)? {j}", min_value=0.00, max_value=5000.00, value=preco_padrao[j]))
+                                valores_por_especie[j]['Preço m³'] = Preco_produto
+                            with colVolumeMadeira:
+                                Volume_padrao_madeira = float(st.number_input(f"Volume (m³) {j}", min_value=0.00, max_value=4.00, value=Volume_padrao[j]))
+                                valores_por_especie[j]['VolSerrArv (m³)'] = Volume_padrao_madeira
+
+
+                    # Atualize as colunas de acordo com a espécie
+                    for especie, valores in valores_por_especie.items():
+                        for coluna, valor in valores.items():
+                            dadosReceitaMadeira.loc[dadosReceitaMadeira['Especie'] == especie, coluna] = valor
+
+                    dadosReceitaMadeira['QuantCortada'] = dadosReceitaMadeira['Total'] * dadosReceitaMadeira['Desbastes']
+                    dadosReceitaMadeira['QuantCorteRaso'] = dadosReceitaMadeira['Total'] - dadosReceitaMadeira['QuantCortada']
+                    dadosReceitaMadeira['VolumeTotal (m³)'] = dadosReceitaMadeira['QuantCorteRaso'] * dadosReceitaMadeira['VolSerrArv (m³)']
+                    dadosReceitaMadeira['Valor total'] = dadosReceitaMadeira['VolumeTotal (m³)'] * dadosReceitaMadeira['Preço m³']
+                    dadosReceitaMadeira['AnoCortePrevisto'] =  dadosReceitaMadeira['Ciclo de Corte'] - dadosReceitaMadeira['Idade'] + datetime.datetime.now().year
+
+                    
+
+                    especies_unicas = dadosReceitaMadeira['Especie'].unique()
+
+                    df_AnoCortePrevisto = dadosReceitaMadeira.groupby(['AnoCortePrevisto', 'Especie']).sum().reset_index()
+                    
+                    soma_AnoCortePrevisto = df_AnoCortePrevisto.groupby('AnoCortePrevisto').sum().reset_index()
+
+                    soma_AnoCortePrevisto['Especie'] = 'Total'
+                    df_AnoCortePrevisto1 = pd.concat([df_AnoCortePrevisto, soma_AnoCortePrevisto], ignore_index=True)
+                    df_AnoCortePrevisto1 = df_AnoCortePrevisto1.sort_values(by='Valor total', ascending=False)
+
+                    # Crie um slider que retorna dois valores (um intervalo).
+
+                    if st.checkbox('Agrupar datas de colheita de madeira'):
+                        valores = st.slider(
+                            ' ',   # deixair sem texto
+                            2030,  # valor mínimo
+                            2070,  # valor máximo
+                            (2030, 2070)  # valores iniciais (min, max)
+                        )
+
+                        min, max = valores
+                        filtro = df_AnoCortePrevisto1['AnoCortePrevisto'].between(min, max)
+                        df_AnoCortePrevisto_filtrado = df_AnoCortePrevisto1.loc[filtro]
+
+                        # Agora somamos todos os valores dentro do intervalo para cada especie
+                        df_AnoCortePrevisto_filtradoSomado = df_AnoCortePrevisto_filtrado.groupby('Especie').sum().reset_index()
+
+                        # Criamos um novo DataFrame com o ano máximo como o único valor no eixo x
+                        df_final = pd.DataFrame({
+                            'AnoCortePrevisto': [max] * len(df_AnoCortePrevisto_filtradoSomado),
+                            'Especie': df_AnoCortePrevisto_filtradoSomado['Especie'],
+                            'Valor total': df_AnoCortePrevisto_filtradoSomado['Valor total']
+                        })
+
+                        graficoAgrupadoCol1,  graficoAgrupadoCol2, graficoAgrupadoCol3 = st.columns([1, 3, 1])
+
+                        with graficoAgrupadoCol2:
+                            fig = px.bar(df_final, x="AnoCortePrevisto", y="Valor total", color="Especie", barmode="group")
+                            st.plotly_chart(fig, use_container_width=True)
+
+                    else:
+                        fig = px.bar(df_AnoCortePrevisto1, x="AnoCortePrevisto", y="Valor total", color="Especie", barmode="group")
+                        st.plotly_chart(fig, use_container_width=True)
+
+
+                        baixarDados1,  baixarDados2, baixarDados3 = st.columns([1, 15, 1])
+
+                        with baixarDados2:
+                            dadosReceitaMadeira
+
+                            st.write('Baixar dados')
+
+                            @st.cache
+                            def convert_df(df):
+                                # IMPORTANT: Cache the conversion to prevent computation on every rerun
+                                output = io.BytesIO()
+                                writer = pd.ExcelWriter(output, engine='xlsxwriter')
+                                df.to_excel(writer, index=False, sheet_name='Sheet1')
+                                writer.save()
+                                return output.getvalue()
+
+                            xlsx_df_AnoCortePrevisto1 = convert_df(df_AnoCortePrevisto1)
+
+                            st.download_button(
+                                label="Download - XLSX",
+                                data=xlsx_df_AnoCortePrevisto1,
+                                file_name='Dados.xlsx',
+                                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            )
+
+                    
+                            
+
+
+
 
         st.markdown(
             '<hr style="border-top: 0.5px solid "#1D250E";">',
             unsafe_allow_html=True
         )
-
-        m1, m2, m3, m4, m5 = st.columns((1,1,1,1,1))
-        m1.write('')
-        m2.metric(label ='Volume total (m³)',value = round(plantios["Volume"].sum(),2))
-        m3.metric(label ='Volume médio por talhão (m³)',value = round(plantios["Volume"].sum()/len(plantios["Talhao"].unique()),2))
-        delta1 = round((round(plantios.loc[plantios['Talhao'].isin(column_name)]["Volume"].sum(),2) - round(plantios["Volume"].sum()/len(plantios["Talhao"].unique()),2)),2)
-        m4.metric(label = 'Volume do talhão selecionado (m³)',value =round(plantios.loc[plantios['Talhao'].isin(column_name)]["Volume"].sum(),2), delta = delta1)
-        
-        m1.write('')
 
 
 #Iniciando frutiferas
@@ -669,7 +1015,7 @@ if page == 'Sucupira Agroflorestas':
                 st.image("imagens/cup.jpeg")
 
         
-        acai_tab, cacau_tab, cup_tab, juc_tab = st.tabs(["Açaí", "Cacau", "Cupuaçu", "Juçara"])
+        acai_tab, cacau_tab, cup_tab, juc_tab, all_tab = st.tabs(["Açaí", "Cacau", "Cupuaçu", "Juçara", "Todas as frutíferas"])
 
         
 
@@ -682,13 +1028,13 @@ if page == 'Sucupira Agroflorestas':
 
                     Horizonte_col1, producaoKG_col2, preco_col3 = st.columns(3) 
                     with Horizonte_col1:   
-                        seed = int(st.number_input("Horizonte de produção", value=2030, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
+                        seed = int(st.number_input("Horizonte de produção", value=2040, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
                         
                     with producaoKG_col2:
-                        quilosPlanta = int(st.number_input("Produção média esperada por planta (kg)", value=20, help="Escolha um intevalo para a produção esperada.",  min_value=0))
+                        quilosPlanta = float(st.number_input("Produção média esperada por planta (kg)", value=10.00, help="Escolha um intevalo para a produção esperada.",  min_value=0.00))
 
                     with preco_col3:
-                        Preco = int(st.number_input("Preço de venda (R$/kg)", value=20, help="Escolha um intevalo para o preço comercializado.",  min_value=0))
+                        Preco = float(st.number_input("Preço de venda (R$/kg)", value=10.00, help="Escolha um intevalo para o preço comercializado.",  min_value=0.00))
 
                     st.markdown('<h5 style="color: gray;">Constante de produção</h3>', unsafe_allow_html=True)
 
@@ -721,7 +1067,7 @@ if page == 'Sucupira Agroflorestas':
                 resultado2_df = novo_df.groupby(['TPF']).count()
                 resultado2_df= resultado2_df.reset_index()
 
- 
+
                 fig6 = px.bar(resultado2_df, x='TPF', y='Talhao',
                 text='Talhao',
                 title='Tempo para frutificação do açaí (<i>Euterpe oleraceae</i>)',
@@ -749,7 +1095,7 @@ if page == 'Sucupira Agroflorestas':
                 plantios_df= plantios.reset_index()
 
                 plantios_df1 = plantios_df.copy()
-               
+            
                 teste = []
                 producao = []
                 producaoFruto = []
@@ -761,7 +1107,7 @@ if page == 'Sucupira Agroflorestas':
                 for h in range(horizonte):
                     for i, row in plantios_df1.iterrows():
                         TPF, qntdade, talhao = int(row['TPF']), int(row['Novo_TPF']), row['Talhao']
-                        print(TPF)                        
+                                            
                         if TPF > 0:
                             producao.append(qntdade * 0 *quilosPlanta)
                             Data.append(anoInventario + h)
@@ -809,7 +1155,9 @@ if page == 'Sucupira Agroflorestas':
                 resultado_df= resultado_df.reset_index()
                 #resultado_df
                 resultado_exibir = resultado.groupby(['Data', 'Talhao'])['Produção'].sum()
-                resultado_resultado_exibir= resultado_exibir.reset_index()
+                resultado_exibir_acai= resultado_exibir.reset_index()
+                resultado_exibir_acai['ValorProduto'] = resultado_exibir_acai['Produção'] * Preco
+                resultado_exibir_acai['Espécie'] = 'Açaí'
                 #resultado_df
 
                 fig7 = px.bar(resultado_df, x='Data', y='Produção',                
@@ -829,13 +1177,13 @@ if page == 'Sucupira Agroflorestas':
                 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_resultado_exibir.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_acai.style.background_gradient(cmap="Greys"))
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
 
-                csv = convert_df(resultado_resultado_exibir)
+                csv = convert_df(resultado_exibir_acai)
 
                 st.download_button(
                     label="Download - CSV",
@@ -855,13 +1203,13 @@ if page == 'Sucupira Agroflorestas':
 
                     cacau_Horizonte_col1, cacau_producaoKG_col2, cacau_preco_col3 = st.columns(3) 
                     with cacau_Horizonte_col1:   
-                        cacau_seed = int(st.number_input("Horizonte de produção ", value=2030, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
+                        cacau_seed = int(st.number_input("Horizonte de produção ", value=2040, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
                         
                     with cacau_producaoKG_col2:
-                        cacau_quilosPlanta = int(st.number_input("Produção média esperada por planta (kg) ", value=20, help="Escolha um intevalo para a produção esperada.",  min_value=0))
+                        cacau_quilosPlanta = float(st.number_input("Produção média esperada por planta (kg) ", value=1.5, help="Escolha um intevalo para a produção esperada.",  min_value=0.0))
 
                     with cacau_preco_col3:
-                        cacau_Preco = int(st.number_input("Preço de venda (R$/kg) ", value=20, help="Escolha um intevalo para o preço comercializado.",  min_value=0))
+                        cacau_Preco = float(st.number_input("Preço de venda (R$/kg) ", value=20.00, help="Escolha um intevalo para o preço comercializado.",  min_value=0.00))
 
                     st.markdown('<h5 style="color: gray;">Constante de produção</h3>', unsafe_allow_html=True)
 
@@ -982,7 +1330,9 @@ if page == 'Sucupira Agroflorestas':
                 #resultado_df
 
                 resultado_exibir = resultado.groupby(['Data', 'Talhao'])['Produção'].sum()
-                resultado_resultado_exibir= resultado_exibir.reset_index()
+                resultado_exibir_cacau= resultado_exibir.reset_index()
+                resultado_exibir_cacau['ValorProduto'] = resultado_exibir_cacau['Produção'] * cacau_Preco
+                resultado_exibir_cacau['Espécie'] = 'Cacau'
                 #resultado_df
 
                 fig7 = px.bar(resultado_df, x='Data', y='Produção',                
@@ -1002,13 +1352,13 @@ if page == 'Sucupira Agroflorestas':
 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_resultado_exibir.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_cacau.style.background_gradient(cmap="Greys"))
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
 
-                csv = convert_df(resultado_resultado_exibir)
+                csv = convert_df(resultado_exibir_cacau)
 
                 st.download_button(
                     label="Download - CSV",
@@ -1027,13 +1377,13 @@ if page == 'Sucupira Agroflorestas':
 
                     cup_Horizonte_col1, cup_producaoKG_col2, cup_preco_col3 = st.columns(3) 
                     with cup_Horizonte_col1:   
-                        cup_seed = int(st.number_input("Horizonte de produção  ", value=2030, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
+                        cup_seed = int(st.number_input("Horizonte de produção  ", value=2040, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
                         
                     with cup_producaoKG_col2:
-                        cup_quilosPlanta = int(st.number_input("Produção média esperada por planta (kg)  ", value=20, help="Escolha um intevalo para a produção esperada.",  min_value=0))
+                        cup_quilosPlanta = float(st.number_input("Produção média esperada por planta (kg)  ", value=5.0, help="Escolha um intevalo para a produção esperada.",  min_value=0.0))
 
                     with cup_preco_col3:
-                        cup_Preco = int(st.number_input("Preço de venda (R$/kg)  ", value=20, help="Escolha um intevalo para o preço comercializado.",  min_value=0))
+                        cup_Preco = float(st.number_input("Preço de venda (R$/kg)  ", value=10.00, help="Escolha um intevalo para o preço comercializado.",  min_value=0.00))
 
                     st.markdown('<h5 style="color: gray;">Constante de produção</h3>', unsafe_allow_html=True)
 
@@ -1151,10 +1501,13 @@ if page == 'Sucupira Agroflorestas':
                 #resultado_df = resultado.groupby(['Talhao','Data'])['Produção'].sum()
                 resultado_df = resultado.groupby(['Data'])['Produção'].sum()
                 resultado_df= resultado_df.reset_index()
+                
                 #resultado_df
 
                 resultado_exibir = resultado.groupby(['Data', 'Talhao'])['Produção'].sum()
-                resultado_resultado_exibir= resultado_exibir.reset_index()
+                resultado_exibir_cup= resultado_exibir.reset_index()
+                resultado_exibir_cup['ValorProduto'] = resultado_exibir_cup['Produção'] * cup_Preco
+                resultado_exibir_cup['Espécie'] = 'Cupuaçu'
                 #resultado_df
 
 
@@ -1175,13 +1528,13 @@ if page == 'Sucupira Agroflorestas':
 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_resultado_exibir.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_cup.style.background_gradient(cmap="Greys"))
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
 
-                csv = convert_df(resultado_resultado_exibir)
+                csv = convert_df(resultado_exibir_cup)
 
                 st.download_button(
                     label="Download - CSV",
@@ -1200,13 +1553,13 @@ if page == 'Sucupira Agroflorestas':
                     #st.markdown('<h5 style="color: gray;">Constante de produção</h3>', unsafe_allow_html=True)
                     juc_Horizonte_col1, juc_producaoKG_col2, juc_preco_col3, juc_incremento_col4,  juc_DAP_MIN, juc_DAP_Max = st.columns(6) 
                     with juc_Horizonte_col1:   
-                        juc_seed = int(st.number_input("Horizonte de produção    ", value=2030, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
+                        juc_seed = int(st.number_input("Horizonte de produção    ", value=2040, help="Escolha um intevalo para a produção esperada.",  min_value=2022))
                         
                     with juc_producaoKG_col2:
                         juc_quilosPlanta = int(st.number_input("Produção média/planta (kg)    ", value=10, help="Escolha um intevalo para a produção esperada.",  min_value=0))
 
                     with juc_preco_col3:
-                        juc_Preco = int(st.number_input("Preço de venda (R$/kg)    ", value=20, help="Escolha um intevalo para o preço comercializado.",  min_value=0))
+                        juc_Preco = float(st.number_input("Preço de venda (R$/kg)    ", value=10.00, help="Escolha um intevalo para o preço comercializado.",  min_value=0.00))
 
                     with juc_incremento_col4:
                         incremento = float(st.number_input("IMA", value=0.8, help="Escolha um intevalo para o preço comercializado.",  min_value=0.0))
@@ -1287,7 +1640,9 @@ if page == 'Sucupira Agroflorestas':
                 resultado_df= resultado_df.reset_index()
 
                 resultado_exibir = resultado.groupby(['Data', 'Talhao'])['Produção'].sum()
-                resultado_resultado_exibir= resultado_exibir.reset_index()
+                resultado_exibir_juc = resultado_exibir.reset_index()
+                resultado_exibir_juc['ValorProduto'] = resultado_exibir_juc['Produção'] * juc_Preco
+                resultado_exibir_juc['Espécie'] = 'Juçara'
                 #resultado_df
 
                 fig8 = px.bar(resultado_df, x='Data', y='Produção',                
@@ -1306,14 +1661,14 @@ if page == 'Sucupira Agroflorestas':
                 st.plotly_chart(fig8, use_container_width=True)
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_resultado_exibir.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_juc.style.background_gradient(cmap="Greys"))
                 #st.dataframe(resultado_resultado_exibir)
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
 
-                csv = convert_df(resultado_resultado_exibir)
+                csv = convert_df(resultado_exibir_juc)
 
                 st.download_button(
                     label="Download - CSV",
@@ -1322,7 +1677,115 @@ if page == 'Sucupira Agroflorestas':
                     mime='text/csv',
                 )
 
+#Com todas as frutas
 
+        with all_tab:
+
+            # Cria a caixa de seleção
+            colPorcentagemComercializada1, colPorcentagemComercializada2 = st.columns(2)
+
+            with colPorcentagemComercializada1:                
+                porcentagemComercializada = float(st.slider('Porcentagem comercializada', 0.0, 1.0, 1.0))
+
+            colReceita1, colReceita2 = st.columns(2)
+
+            df_concat = pd.concat([resultado_exibir_acai, resultado_exibir_cacau, resultado_exibir_cup, resultado_exibir_juc], ignore_index=True)  
+            df_ProducaoEspecieData = df_concat.groupby(['Espécie', 'Data']).sum().reset_index()
+            df_ProducaoEspecieData['ValorProduto'] = df_ProducaoEspecieData['ValorProduto']  * porcentagemComercializada
+            df_ProducaoEspecieData['Produção'] = df_ProducaoEspecieData['Produção']  * porcentagemComercializada
+
+            df_sum = df_ProducaoEspecieData.groupby('Data').sum().reset_index()
+
+            df_sum['Espécie'] = 'Total'
+            df_Producao = pd.concat([df_ProducaoEspecieData, df_sum], ignore_index=True)
+            df_Producao = df_Producao.sort_values(by='ValorProduto', ascending=False)
+            df_Producao['ValorProduto'] = round(df_Producao['ValorProduto'], 2)
+            df_Producao['Produção'] = round(df_Producao['Produção'], 2)
+
+            with colReceita1:
+                fig = px.bar(df_Producao, x="Data", y="ValorProduto", color="Espécie", barmode="group") 
+                st.plotly_chart(fig)
+
+                # Cria um slider que vai de 2023 até 2050
+                
+                ano_selecionado = int(st.slider('Selecione um ano', 2023, 2050, 2023))                
+                fig2 =  px.pie(df_Producao.loc[df_Producao['Data'] == ano_selecionado], values='ValorProduto', names='Espécie', hole=.4)
+                st.plotly_chart(fig2)
+                
+                
+
+            # Transforma o dataframe em uma tabela pivot
+            table = pd.pivot_table(df_Producao, values='ValorProduto', index='Data', columns='Espécie')
+
+            # Adiciona rótulos às linhas e colunas
+            table.index.name = 'Data'
+            table.columns.name = 'Espécie'
+            # Cria a coluna de rótulo
+            rotulo = ['Ano'] + table.columns.tolist()
+
+            #Para a produção
+            # Transforma o dataframe em uma tabela pivot
+            tableProducao = pd.pivot_table(df_Producao, values='Produção', index='Data', columns='Espécie')
+
+            # Adiciona rótulos às linhas e colunas
+            tableProducao.index.name = 'Data'
+            tableProducao.columns.name = 'Espécie'
+
+            # Cria a coluna de rótulo
+            rotulo = ['Ano'] + tableProducao.columns.tolist()
+
+            # Cria a figura da tabela e Formata a figura da tabela
+            with colReceita2:
+
+                st.markdown('<h3 style="text-align: center; display: flex; align-items: center; justify-content: center;">Receita bruta esperada (R$)</h3>', unsafe_allow_html=True)
+                fig3 = go.Figure(data=[go.Table(
+                    header=dict(values=rotulo,
+                                fill_color='#1E90FF',
+                                font=dict(color='white', size=14),
+                                align='center'),
+                    cells=dict(values=[table.reset_index()['Data']] + [table[col] for col in table.columns],
+                            fill_color='lavender',
+                            align='center'))
+                ])
+
+                
+                st.plotly_chart(fig3)
+
+                st.markdown('<h3 style="text-align: center; display: flex; align-items: center; justify-content: center;">Produção esperada (kg)</h3>', unsafe_allow_html=True)
+                
+                fig4 = go.Figure(data=[go.Table(
+                    header=dict(values=rotulo,
+                                fill_color='#1E90FF',
+                                font=dict(color='white', size=14),
+                                align='center'),
+                    cells=dict(values=[tableProducao.reset_index()['Data']] + [tableProducao[col] for col in tableProducao.columns],
+                            fill_color='lavender',
+                            align='center'))
+                ])
+                
+                
+                st.plotly_chart(fig4)
+
+                st.write('Baixar os dados organizados')
+
+                @st.cache
+                def convert_df(df):
+                    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+                    output = io.BytesIO()
+                    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+                    df.to_excel(writer, index=False, sheet_name='Sheet1')
+                    writer.save()
+                    return output.getvalue()
+                
+                
+                xlsx_df_Producao = convert_df(df_ProducaoEspecieData)
+
+                st.download_button(
+                    label="Download - XLSX",
+                    data=xlsx_df_Producao,
+                    file_name='Dados_Producao.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
 
     elif Uso == 'Frutíferas' and Variavel == 'Fenofase':
 
@@ -1343,5 +1806,283 @@ if page == 'Sucupira Agroflorestas':
     elif Uso == 'Especiárias' and Variavel == 'Fenofase':
         pass
 
+    elif Uso == 'IRP':
+
+        df["AB"] = df.loc[~df['DAP'].isnull()].groupby(['Talhao'])['DAP'].transform(lambda x: x **2 * np.pi / 40000)
+        df1 = df.groupby('Talhao').agg({'area': 'mean', 'idade': 'mean', 'AB': 'sum'}).reset_index()
+
+        contagem = df.groupby(["Talhao", "Uso"]).size().unstack(fill_value=0).reset_index()
+    
+        df3 = pd.merge(df1, contagem, on='Talhao')
+
+        # definindo a função para dividir as colunas pela coluna 'area'
+        df_novo = df3.copy()
+        for coluna in df_novo.columns:
+            if coluna not in ['Talhao', 'idade', 'area']:
+                df_novo[coluna] = df_novo[coluna] / df_novo['area']
+
+        def calcular_indice(frut, ab, idade, mad, const_frut, const_mad, const_area_basal):
+            return ( frut**const_frut  * (ab ** const_area_basal / idade) - mad) / ( mad**const_mad * (ab / idade) + frut) 
+        
+
+        with st.expander(" ", expanded=True):
+
+            st.write('## Índice de Relação Produtiva - IRP')
+            c1, c2, c3 = st.columns(3)
+
+            with c2:
+                st.markdown("<span style='font-size: 20pt'>" +
+                    r"$\frac{frut^{A} \cdot (\frac{ab^{C}}{idade}) - mad}{mad^{B} \cdot (\frac{ab}{idade}) + frut}$" +
+                    "</span>", unsafe_allow_html=True)
+
+            st.write("""
+                ### Descrição das variáveis                
+
+                1. `frut`: variável numérica que representa a quantidade de plantas frutíferas.
+
+                2. `ab`: variável numérica que representa a área basal das espécies madeireiras.
+
+                3. `idade`: variável numérica que representa a idade da planta em anos.
+
+                4. `mad`: variável numérica que representa a quantidade de indivíduos para uso madeireiro.
+
+                5. `A`: constante numérica que é utilizada para ajustar a importância da variável `frut` na função.
+
+                6. `B`: constante numérica que é utilizada para ajustar a importância da variável `mad` na função.
+
+                7. `C`: constante numérica que é utilizada para ajustar a importância da variável `ab` na função. 
+
+                Essas variáveis são utilizadas para calcular um índice que depende da quantidade de frutíferas, da área basal, da idade
+                  e da quantidade de indivíduos de uso madeireiro, bem como de constantes numéricas que influenciam o peso relativo de 
+                  cada uma dessas variáveis no cálculo do índice.
+                """)     
+
+            frut, mad, area_basal = st.columns(3)
+            with frut:
+                const_frut = float(st.number_input("A", value=1.0, help="Escolha um peso para as frutíferas.",  min_value=0.0))
+
+            with mad:
+                const_mad = float(st.number_input("B", value=1.0, help="Escolha um peso para as madeireiras.",  min_value=0.0))
+
+            with area_basal:
+                const_area_basal = float(st.number_input("C", value=1.0, help="Escolha um peso para a área basal.",  min_value=0.0))
+
+        g1, g2 = st.columns(2)
+        with g1:
+
+            dados2 = df.groupby(['Talhao', 'Uso']).size().reset_index(name='counts')
+            dados2['prop'] = dados2.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum())
+            dados2 = dados2.sort_values(by=['Uso', 'prop'])
+            dados2['talhao1'] = pd.Categorical(dados2['Talhao'], categories=dados2['Talhao'].unique(), ordered=True)
+
+            dados2['Uso'] = pd.Categorical(dados2['Uso'], categories=dados2['Uso'].unique(), ordered=True)
+            dados2 =  dados2.reset_index()            
+
+            fig_Q_F = px.bar(dados2, y='Talhao', x='prop', color='Uso',
+            orientation='h', text="counts",
+            color_discrete_sequence=["#1D250E","#556B2F",  "#2F4F4F"])
+            fig_Q_F.update_layout(title={'text': "Uso da espécie", 'x':0.5, 'xanchor': 'center'},
+            xaxis_title="Proporção",
+            yaxis_title="Talhões")
+            #fig_Q_F.update_layout(plot_bgcolor="#FFFAFA")
+            fig_Q_F.update_layout(height=600, width = 500)                         
+
+            st.plotly_chart(fig_Q_F, use_container_width=True)
+
+            fig1 = px.bar(df_novo.sort_values(by='AB', ascending=True), 
+                          y='Talhao', x='AB',
+                          orientation='h')
+            
+            fig1.update_traces(textposition='outside')
+            #fig.update_layout(yaxis_range=[0, 70000])
+            fig1.update_layout(xaxis_tickmode='linear')
+            fig1.update_traces(marker_color="#1D250E")
+            fig1.update_layout(height=600, width = 500)
+            st.plotly_chart(fig1, use_container_width=True)
+    
+
+        with g2:
+
+            # criar o gráfico
+            df_novo['indice'] = calcular_indice(df_novo['Frutífera'], df_novo['AB'], df_novo['idade'], df_novo['Madeireira'], const_frut, const_mad, const_area_basal)
+            # ordenar o dataframe pela coluna 'indice'
+            df_novo= df_novo.sort_values(by='indice', ascending=True)
+
+            fig = px.bar(df_novo, y='Talhao', x='indice',
+                        orientation='h')
+            fig.update_traces(textposition='outside')
+            #fig.update_layout(yaxis_range=[0, 70000])
+            fig.update_layout(xaxis_tickmode='linear')
+            fig.update_traces(marker_color="#1D250E")
+            fig.update_layout(height=600, width = 500)
+            st.plotly_chart(fig, use_container_width=True)
+
+            fig2 = px.bar(df_novo.sort_values(by='idade', ascending=True), 
+                y='Talhao', x='idade',
+                orientation='h')
+            
+            fig2.update_traces(textposition='outside')
+            #fig.update_layout(yaxis_range=[0, 70000])
+            fig2.update_layout(xaxis_tickmode='linear')
+            fig2.update_traces(marker_color="#1D250E")
+            fig2.update_layout(height=600, width = 500)
+            st.plotly_chart(fig2, use_container_width=True)
+
+
+        # Exibir o dataframe
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col2:
+            st.write(df_novo)
+
+        @st.cache
+        def convert_df(df):
+            # IMPORTANT: Cache the conversion to prevent computation on every rerun
+            return df.to_csv().encode('utf-8')
+
+        csv = convert_df(df_novo)
+
+        st.download_button(
+            label="Download - CSV",
+            data=csv,
+            file_name='indice_agroflorestal.csv',
+            mime='text/csv',
+        )
+
+
     else:
         pass
+
+    if Uso in ['Madeira', 'Frutíferas'] and Variavel in ['TPF', 'Volume (m³)']:
+        with col3:
+            if Uso == 'Frutíferas' and Variavel == 'TPF':
+                
+                # Exibindo o botão na sidebar
+
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                
+
+                # Configuração de estilo
+                def main():
+                    # Configuração de estilo
+                    st.markdown(
+                        """
+                        <style>
+                        .sidebar .button {
+                            display: inline-block;
+                            padding: 10px 20px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-align: center;
+                            cursor: pointer;
+                            color: #fff;
+                            background-color: #ff3366;
+                            border: none;
+                            border-radius: 5px;
+                            transition: background-color 0.3s;
+                        }
+                        .sidebar .button:hover {
+                            background-color: #ff4488;
+                        }
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    # Exibindo o botão na sidebar
+                    if st.sidebar.button(f"Gerar relatório {Uso}", key="my_button", help="Gerar relatório"):
+                        progress_bar = st.sidebar.progress(0)
+                        status_text = st.sidebar.empty()
+
+                        # Salvando o DataFrame em um arquivo Excel temporário
+                        temp_file_path = f"{Uso}_Receita.xlsx"
+
+                        df_Producao.to_excel(temp_file_path, index=False)
+                        progress_bar.empty()
+                        status_text.markdown(get_download_link(temp_file_path, "Clique aqui para baixar o relatório"), unsafe_allow_html=True)
+
+                def get_download_link(file_path, link_text):
+                    with open(file_path, 'rb') as file:
+                        contents = file.read()
+                    st.sidebar.download_button(
+                        label=link_text,
+                        data=contents,
+                        file_name=file_path,
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+
+                if __name__ == "__main__":
+                    main()
+            
+            elif Uso == 'Madeira' and Variavel =='Volume (m³)': 
+                # Exibindo o botão na sidebar
+
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                st.sidebar.write("")
+                
+
+                # Configuração de estilo
+                def main():
+                    # Configuração de estilo
+                    st.markdown(
+                        """
+                        <style>
+                        .sidebar .button {
+                            display: inline-block;
+                            padding: 10px 20px;
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-align: center;
+                            cursor: pointer;
+                            color: #fff;
+                            background-color: #ff3366;
+                            border: none;
+                            border-radius: 5px;
+                            transition: background-color 0.3s;
+                        }
+                        .sidebar .button:hover {
+                            background-color: #ff4488;
+                        }
+                        </style>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+                    # Exibindo o botão na sidebar
+                    if st.sidebar.button(f"Gerar relatório {Uso}", key="my_button", help="Gerar relatório"):
+                        progress_bar = st.sidebar.progress(0)
+                        status_text = st.sidebar.empty()
+
+                        # Salvando o DataFrame em um arquivo Excel temporário
+                        temp_file_path = f"{Uso}_Receita.xlsx"
+
+                        dadosReceitaMadeira.to_excel(temp_file_path, index=False)
+                        progress_bar.empty()
+                        status_text.markdown(get_download_link(temp_file_path, "Clique aqui para baixar o relatório"), unsafe_allow_html=True)
+
+                def get_download_link(file_path, link_text):
+                    with open(file_path, 'rb') as file:
+                        contents = file.read()
+                    st.sidebar.download_button(
+                        label=link_text,
+                        data=contents,
+                        file_name=file_path,
+                        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    )
+
+                if __name__ == "__main__":
+                    main()
+            else:
+                pass

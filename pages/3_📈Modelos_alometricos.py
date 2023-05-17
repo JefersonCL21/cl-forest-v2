@@ -29,7 +29,8 @@ import pandas as pd
 from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
+import math
+import io
 
 st.set_page_config(
     page_title="CL Forest Biometrics",
@@ -323,7 +324,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 'Escolha um modelo', mod, ['Logístico']
                 )
 
-   
+
     for esp in especie1:
         df1 = df.loc[df['Especie'].isin([esp])] 
         modelo = []
@@ -486,7 +487,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 df_novo1 = load_data()
                 
 
-   
+
         with col_2:            
             # Adicionar o selectbox ao aplicativo Streamlit
             if file is not None:
@@ -536,7 +537,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 fig3.add_scatter(x=df_novo['DAP_'], y=df_novo['HT_Par'], mode='markers', name='Parabólico', marker=dict(size=6, color="#8B4513"),)
 
                 # Store the initial value of widgets in session state
-       
+    
 
         col1, col2 = st.columns(2)
         if file is not None:
@@ -716,8 +717,150 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
         
 
             
-    elif selectbox == "Volumétricos":
-        st.title("Modelo de Rede Neural para estimar altura")
+elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
+
+    if selectbox == "Volumétricos":
+        file = st.file_uploader("Importar dados de cubagem rigorosa", type=["xlsx"])
+        if file is not None:
+            @st.cache(allow_output_mutation=True)
+            def load_data():
+                df = pd.read_excel(file, sheet_name = None, header= None)
+                return df  
+        
+            dados = load_data()
+            #st.write(dados.keys())
+
+            plan = dados.keys()
+
+            COLUNAS = [
+                'Talhão',
+                'Arv',
+                'Espécie',
+                'porção',
+                'seção',
+                'DAP',
+                'HT',
+                'HC',
+                'DC',
+                'DT (cm)',
+                'Htoco',
+                'HI',
+                'DI',
+                'gi',
+                'vi'
+                
+            ]
+
+            df = pd.DataFrame(columns=COLUNAS)
+
+            count = 0
+            ci = 1
+            CI = []
+            HI = []
+            arv = []
+            DAP = []
+            HT = []
+            Htoco = []
+            DT = []
+            Talhao = []
+            HC = []
+            Especie = []
+            DC = []
+            secao = []
+            porcao = []
+            gi = []
+            for p in plan:
+                
+                trabalhar = dados[p]
+                count = 0
+                while count < (len(trabalhar.iloc[:,2]) - 6):
+
+                    ci = trabalhar.iloc[(6 +count),2] 
+                    hi = trabalhar.iloc[(6 +count),1]
+                    sec = trabalhar.iloc[(6 +count),0]
+                    
+                    if sec > 3 and hi <= 1.4:
+                        porc = 'G'
+                    else:
+                        porc = 'F'
+                        
+                    
+                    if pd.isna(ci):
+                        count = 0
+                        ci = 1
+                        break
+
+
+                    CI.append(ci)
+                    HI.append(hi)
+                    
+                    gi.append((ci/math.pi)**2*math.pi/40000)
+
+                    arv.append(trabalhar.iloc[0,1])
+                    DAP.append(trabalhar.iloc[8,2] / math.pi)
+                    HT.append(trabalhar.iloc[2,1])
+                    Htoco.append(trabalhar.iloc[3,1])
+                    DT.append(trabalhar.iloc[4,1])
+                    Talhao.append(trabalhar.iloc[1,3])
+                    HC.append(trabalhar.iloc[2,3])
+                    Especie.append(trabalhar.iloc[3,3])
+                    DC.append(trabalhar.iloc[4,3])
+                    secao.append(sec)
+                    porcao.append(porc)
+
+                    count+=1
+
+            df['DI'] = CI
+            df['HI'] = HI
+            df['Talhão'] = Talhao
+            df['Arv'] = arv
+            df['Espécie'] = Especie
+            df['seção'] = secao
+            df['DAP'] = DAP
+            df['HT'] = HT
+            df['HC'] = HC
+            df['DC'] = DC
+            df['DT (cm)'] = DT
+            df['Htoco'] = Htoco
+            df['porção'] = porcao
+            df['gi'] = gi
+
+            for i in range(len(df) - 1):
+
+                if df.iloc[i, 3] != df.iloc[i+1, 3]:
+                    df.iloc[i, 14] = 0 
+                    
+                elif df.iloc[i, 1] == df.iloc[i+1, 1] and df.iloc[i, 3] == 'F':
+                    df.iloc[i, 14] = (df.iloc[i, 13] + df.iloc[i+1, 13])/2 * (df.iloc[i+1, 11] - df.iloc[i, 11]) #smallian 
+                    
+                elif df.iloc[i, 1] == df.iloc[i+1, 1] and df.iloc[i, 3] == 'G':
+                    df.iloc[i, 14] = df.iloc[i, 13] * df.iloc[i, 11]# huber  
+                
+                    
+                else: 
+                    df.iloc[i, 14] = 0
+
+            df
+
+            st.write('Baixar os dados organizados')
+
+            @st.cache
+            def convert_df(df):
+                # IMPORTANT: Cache the conversion to prevent computation on every rerun
+                output = io.BytesIO()
+                writer = pd.ExcelWriter(output, engine='xlsxwriter')
+                df.to_excel(writer, index=False, sheet_name='Sheet1')
+                writer.save()
+                return output.getvalue()
+
+            xlsx_data = convert_df(df)
+
+            st.download_button(
+                label="Download - XLSX",
+                data=xlsx_data,
+                file_name='Dados.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
 
     else:
         pass

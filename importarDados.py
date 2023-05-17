@@ -8,6 +8,7 @@ import pickle
 
 
 #importar dados do excel de inventário
+'''
 @st.cache(allow_output_mutation=True)
 def carregarDados():    
     #df = pd.read_excel("dados/GERAL_V2.xlsx", sheet_name="dados")
@@ -15,6 +16,8 @@ def carregarDados():
         df = pickle.load(handle)
     
     return df 
+'''
+
 
 
 
