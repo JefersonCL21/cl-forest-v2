@@ -336,12 +336,12 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
         fig = px.scatter(df1, x='DAP', y='HT')
         fig.update_traces(marker_color="#1D250E")
         fig.update_layout(title=esp)
-       
+
         if 'Logístico' in modelos:
             df1['HT_log'] = df1.apply(lambda x: logistic_model(x['DAP'], x['Especie']), axis=1)        
         
             fig.add_scatter(x=df1['DAP'], y=df1['HT_log'], mode='markers', name='Logístico', marker=dict(size=5, color="red"),) 
-                              
+
             modelo.append('Logístico')
             cor.append(round(np.corrcoef(df1['HT'], y=df1['HT_log'])[0,1],3))
             rmse.append(round(np.sqrt(np.mean((np.array(df1['HT']) - np.array(df1['HT_log'])) ** 2)),4))
@@ -414,23 +414,23 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 "Gompertz", "Gompertz", "Gompertz", "Gompertz", "Gompertz", "Curtis", "Curtis", "Curtis",
                 "Curtis", "Curtis", "Curtis", "Curtis", "Curtis", "Curtis"],
                 'b0': [-1.103468571, 2.698653641, 2.270905087, 1.662469507, 3.665754442,
-              -1.975926648, 2.238091246, 2.368119239, 2.483537519, 21.41571318,
-              21.79732276, 8.990513346, 10.57467764, 17.51162407, 8.009336547,
-              17.9521742, 27.8741208, 18.30804101, 22.18278669, 22.57496185,
-              9.331061448, 11.10535017, 18.65171429, 8.512413427, 22.75351363,
-              34.43775768, 19.80402714, 3.351592289, 3.013555196, 2.260295062,
-              2.476019547, 2.921989353, 2.444400613, 2.639323777, 3.228512313,
-              3.0096409],
+                -1.975926648, 2.238091246, 2.368119239, 2.483537519, 21.41571318,
+                21.79732276, 8.990513346, 10.57467764, 17.51162407, 8.009336547,
+                17.9521742, 27.8741208, 18.30804101, 22.18278669, 22.57496185,
+                9.331061448, 11.10535017, 18.65171429, 8.512413427, 22.75351363,
+                34.43775768, 19.80402714, 3.351592289, 3.013555196, 2.260295062,
+                2.476019547, 2.921989353, 2.444400613, 2.639323777, 3.228512313,
+                3.0096409],
                 'b1': [1.186903301, 0.751169154, 0.728168192, 0.66026658, 0.789337522, 1.673506602, 0.682264265,
             0.571141995, 0.629504792, 6.871833269, 3.776144935, 2.162877862, 3.091923738, 2.423401613,
             7.02216711, 4.64531414, 5.231677313, 3.449462375, 1.088884968, 0.596504514, 0.27528858, 
             0.506875092, 0.337405964, 1.048987267, 0.730806687, 0.789669916, 0.559738448, -11.14719061,
             -7.295961829, -2.719103577, -4.989873432, -5.815057512, -4.673091866, -4.651464538, -12.56345354, 
             -9.301165045],
-             'b2': [1.143588852, 0.891053782, 3.230319113, 1.881754923, 2.151041452, 5.262996542, 0.801898567, 1.058495846, 
-             1.480786358, 0.157175976, 0.105154042, 0.232040133, 0.180739727, 0.123758488, 0.438732334, 0.150851381, 0.076901282, 
-             0.101525454, 0.115312051, 0.07332119, 0.174241468, 0.129479685, 0.086086353, 0.301346331,  0.078943938, 
-             0.041422041, 0.067651954, None, None, None, None, None, None, None, None, None]
+            'b2': [1.143588852, 0.891053782, 3.230319113, 1.881754923, 2.151041452, 5.262996542, 0.801898567, 1.058495846, 
+            1.480786358, 0.157175976, 0.105154042, 0.232040133, 0.180739727, 0.123758488, 0.438732334, 0.150851381, 0.076901282, 
+            0.101525454, 0.115312051, 0.07332119, 0.174241468, 0.129479685, 0.086086353, 0.301346331,  0.078943938, 
+            0.041422041, 0.067651954, None, None, None, None, None, None, None, None, None]
                         }
 
     df_exportar = pd.DataFrame(data)
@@ -493,7 +493,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
             if file is not None:
                 esp = st.selectbox("Espécie:", especie)
                 df_novo1["Especie"]  = esp
-                 
+
                 df_novo = df_novo1.copy()
 
         with col_2:
@@ -518,7 +518,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
 
         if file is not None:
             fig3= px.scatter()
-           
+
 
             if 'Logístico' in modelos:
                 df_novo['HT_log'] = df_novo.apply(lambda x: logistic_model(x['DAP_'], x['Especie']), axis=1)
@@ -561,11 +561,9 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 )
 
         with col2:
-           if file is not None:
+            if file is not None:
                 st.plotly_chart(fig3)            
 
-                     
-      
 elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
 
@@ -769,6 +767,12 @@ elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
             secao = []
             porcao = []
             gi = []
+            const_ = st.sidebar.radio('Medição efetuada ', ('Diâmetro', 'Circunferência'), horizontal=False, key=None, help=None)
+            if const_=='Diâmetro':
+                const = 1.0
+            else:
+                const = math.pi
+
             for p in plan:
                 
                 trabalhar = dados[p]
@@ -794,10 +798,10 @@ elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
                     CI.append(ci)
                     HI.append(hi)
                     
-                    gi.append((ci/math.pi)**2*math.pi/40000)
+                    gi.append((ci/const)**2*math.pi/40000)
 
                     arv.append(trabalhar.iloc[0,1])
-                    DAP.append(trabalhar.iloc[8,2] / math.pi)
+                    DAP.append(trabalhar.iloc[8,2] / const)
                     HT.append(trabalhar.iloc[2,1])
                     Htoco.append(trabalhar.iloc[3,1])
                     DT.append(trabalhar.iloc[4,1])

@@ -238,14 +238,14 @@ if page == 'Sucupira Agroflorestas':
             
 
             fig_Q_F = px.bar(dados2, y='Talhao', x='prop', color='Q_F',
-             orientation='h', text="counts",
-             color_discrete_sequence=["#1D250E","#556B2F",  "#2F4F4F"])
+            orientation='h', text="counts",
+            color_discrete_sequence=["#1D250E","#556B2F",  "#2F4F4F"])
             fig_Q_F.update_layout(title={'text': "Qualidade de fuste", 'x':0.5, 'xanchor': 'center'},
             xaxis_title="Proporção",
             yaxis_title="Talhões")
             #fig_Q_F.update_layout(plot_bgcolor="#FFFAFA")
             fig_Q_F.update_layout(height=500, width = 800)   
-                      
+
 
             st.plotly_chart(fig_Q_F, use_container_width=True)        
             
@@ -282,7 +282,7 @@ if page == 'Sucupira Agroflorestas':
 
             df["DAP_MED"] = df.loc[(df['Especie'].isin(especie)) & (~df['DAP'].isnull())].groupby(['Talhao'])['DAP'].transform('mean')
             df1 = df.loc[df['Especie'].isin(especie)]  
-                 
+
             
             plantios = df1.loc[df['Especie'].isin(especie)] 
             plantios = plantios.groupby(['Talhao', 'Especie', 'DAP_MED']).mean()
@@ -314,11 +314,11 @@ if page == 'Sucupira Agroflorestas':
             width=800, height=550,
             color_discrete_sequence=["#1D250E", "#006400","#2F4F4F", "#1D250E","#556B2F", "#808000", "#556B2F", "#A9A9A9"], 
             title="Boxplot",
-                             labels={
-                     "Talhao": " ",
-                     "DAP": "DAP (cm)",
+                            labels={
+                    "Talhao": " ",
+                    "DAP": "DAP (cm)",
                     
-                 },
+                },
             )
             #fig1.update_layout(plot_bgcolor="#FFFAFA")                                
                 
@@ -1177,7 +1177,7 @@ if page == 'Sucupira Agroflorestas':
                 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_exibir_acai.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_acai)
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -1352,7 +1352,7 @@ if page == 'Sucupira Agroflorestas':
 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_exibir_cacau.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_cacau)
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -1528,7 +1528,7 @@ if page == 'Sucupira Agroflorestas':
 
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_exibir_cup.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_cup)
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -1661,7 +1661,7 @@ if page == 'Sucupira Agroflorestas':
                 st.plotly_chart(fig8, use_container_width=True)
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
-                st.write(resultado_exibir_juc.style.background_gradient(cmap="Greys"))
+                st.write(resultado_exibir_juc)
                 #st.dataframe(resultado_resultado_exibir)
                 @st.cache
                 def convert_df(df):
@@ -1853,8 +1853,8 @@ if page == 'Sucupira Agroflorestas':
                 7. `C`: constante numérica que é utilizada para ajustar a importância da variável `ab` na função. 
 
                 Essas variáveis são utilizadas para calcular um índice que depende da quantidade de frutíferas, da área basal, da idade
-                  e da quantidade de indivíduos de uso madeireiro, bem como de constantes numéricas que influenciam o peso relativo de 
-                  cada uma dessas variáveis no cálculo do índice.
+                e da quantidade de indivíduos de uso madeireiro, bem como de constantes numéricas que influenciam o peso relativo de 
+                cada uma dessas variáveis no cálculo do índice.
                 """)     
 
             frut, mad, area_basal = st.columns(3)
@@ -1890,8 +1890,8 @@ if page == 'Sucupira Agroflorestas':
             st.plotly_chart(fig_Q_F, use_container_width=True)
 
             fig1 = px.bar(df_novo.sort_values(by='AB', ascending=True), 
-                          y='Talhao', x='AB',
-                          orientation='h')
+                        y='Talhao', x='AB',
+                        orientation='h')
             
             fig1.update_traces(textposition='outside')
             #fig.update_layout(yaxis_range=[0, 70000])
