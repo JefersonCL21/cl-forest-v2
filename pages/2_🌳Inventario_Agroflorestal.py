@@ -165,7 +165,7 @@ if page == 'Sucupira Agroflorestas':
             st.plotly_chart(fig_res, use_container_width=True)
 
             res_dados = res_dados.reset_index()
-            st.write(res_dados[['Popular', 'Especie', 'n']].style.background_gradient(cmap="Greys"))
+            st.write(res_dados[['Popular', 'Especie', 'n']])
             @st.cache
             def convert_df(df):
                 # IMPORTANT: Cache the conversion to prevent computation on every rerun
@@ -963,25 +963,15 @@ if page == 'Sucupira Agroflorestas':
                             @st.cache
                             def convert_df(df):
                                 # IMPORTANT: Cache the conversion to prevent computation on every rerun
-                                output = io.BytesIO()
-                                writer = pd.ExcelWriter(output, engine='xlsxwriter')
-                                df.to_excel(writer, index=False, sheet_name='Sheet1')
-                                writer.save()
-                                return output.getvalue()
+                                return df.to_csv().encode('utf-8')
 
-                            xlsx_df_AnoCortePrevisto1 = convert_df(df_AnoCortePrevisto1)
-
+                            csv_AnoCortePrevisto1 = convert_df(df_AnoCortePrevisto1)
                             st.download_button(
-                                label="Download - XLSX",
-                                data=xlsx_df_AnoCortePrevisto1,
-                                file_name='Dados.xlsx',
-                                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                            )
-
-                    
-                            
-
-
+                                label="Download - CSV",
+                                data= csv_AnoCortePrevisto1,
+                                file_name='Dados_Producao.csv',
+                                mime='text/csv',
+                            )                    
 
 
         st.markdown(
@@ -1771,21 +1761,15 @@ if page == 'Sucupira Agroflorestas':
                 @st.cache
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
-                    output = io.BytesIO()
-                    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-                    df.to_excel(writer, index=False, sheet_name='Sheet1')
-                    writer.save()
-                    return output.getvalue()
-                
-                
-                xlsx_df_Producao = convert_df(df_ProducaoEspecieData)
+                    return df.to_csv().encode('utf-8')
 
+                csv_ProducaoEspecieData = convert_df(df_ProducaoEspecieData)
                 st.download_button(
-                    label="Download - XLSX",
-                    data=xlsx_df_Producao,
-                    file_name='Dados_Producao.xlsx',
-                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                )
+                    label="Download - CSV",
+                    data=csv_ProducaoEspecieData,
+                    file_name='Dados_Producao.csv',
+                    mime='text/csv',
+                ) 
 
     elif Uso == 'Frutíferas' and Variavel == 'Fenofase':
 

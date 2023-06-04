@@ -851,20 +851,15 @@ elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
             @st.cache
             def convert_df(df):
                 # IMPORTANT: Cache the conversion to prevent computation on every rerun
-                output = io.BytesIO()
-                writer = pd.ExcelWriter(output, engine='xlsxwriter')
-                df.to_excel(writer, index=False, sheet_name='Sheet1')
-                writer.save()
-                return output.getvalue()
+                return df.to_csv().encode('utf-8')
 
-            xlsx_data = convert_df(df)
-
+            csv= convert_df(df)
             st.download_button(
-                label="Download - XLSX",
-                data=xlsx_data,
-                file_name='Dados.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            )
+                label="Download - CSV",
+                data= csv,
+                file_name='Dados_Producao.csv',
+                mime='text/csv',
+            )  
 
     else:
         pass
