@@ -229,7 +229,7 @@ if page == 'Sucupira Agroflorestas':
         
         with Sub_ind_col2:
             dados2 = df[df['Especie'].isin(especie)].groupby(['Talhao', 'Popular', 'Q_F']).size().reset_index(name='counts')
-            dados2['prop'] = dados2.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum())
+            dados2['prop'] = dados2.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum()).reset_index(drop=True)
             dados2 = dados2.sort_values(by=['Q_F', 'prop'])
             dados2['talhao1'] = pd.Categorical(dados2['Talhao'], categories=dados2['Talhao'].unique(), ordered=True)
 
@@ -958,20 +958,7 @@ if page == 'Sucupira Agroflorestas':
                         with baixarDados2:
                             dadosReceitaMadeira
 
-                            st.write('Baixar dados')
-
-                            @st.cache
-                            def convert_df(df):
-                                # IMPORTANT: Cache the conversion to prevent computation on every rerun
-                                return df.to_csv().encode('utf-8')
-
-                            csv_AnoCortePrevisto1 = convert_df(df_AnoCortePrevisto1)
-                            st.download_button(
-                                label="Download - CSV",
-                                data= csv_AnoCortePrevisto1,
-                                file_name='Dados_Producao.csv',
-                                mime='text/csv',
-                            )                    
+                            st.write('Baixar dados')          
 
 
         st.markdown(
