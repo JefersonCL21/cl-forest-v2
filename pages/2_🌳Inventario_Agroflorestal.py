@@ -250,7 +250,7 @@ if page == 'Sucupira Agroflorestas':
             st.plotly_chart(fig_Q_F, use_container_width=True)        
             
             dados3 = df[df['Especie'].isin(especie)].groupby(['Talhao', 'Popular', 'P_S']).size().reset_index(name='counts')
-            dados3['prop'] = dados3.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum())
+            dados3['prop'] = dados3.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum()).reset_index(drop=True)
             dados3 = dados3.sort_values(by=['P_S', 'prop'])
             dados3['Talhao'] = pd.Categorical(dados3['Talhao'], categories=dados3['Talhao'].unique(), ordered=True)
 
