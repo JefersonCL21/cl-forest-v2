@@ -285,7 +285,7 @@ if page == 'Sucupira Agroflorestas':
 
             
             plantios = df1.loc[df['Especie'].isin(especie)] 
-            plantios = plantios.groupby(['Talhao', 'Especie', 'DAP_MED']).mean()
+            plantios = plantios.groupby(['Talhao', 'Especie'])['DAP_MED'].mean().reset_index()
 
         with Sub_Talhao_col2:
         
@@ -301,8 +301,8 @@ if page == 'Sucupira Agroflorestas':
             map_df['Quantidade'] = 0        
             for j in range(0, len(map_df.index)):
                 for i in range(0, len(plantios.index)):
-                    if (map_df.iloc[j, 1] == plantios.index[i][0]):
-                        map_df.loc[j, 'Quantidade'] = plantios.index[i][2]
+                    if (map_df.loc[j, 'Name'] == plantios.loc[i, 'Talhao']):
+                        map_df.loc[j, 'Quantidade'] = plantios["DAP_MED"][i]
             
             gerarMapa.gerarMapa(map_df = map_df) 
 
@@ -374,7 +374,7 @@ if page == 'Sucupira Agroflorestas':
                 df1 = df.loc[df['Especie'].isin(especie)]        
                 
                 plantios = df1.loc[df['Especie'].isin(especie)] 
-                plantios = plantios.groupby(['Talhao', 'Especie', 'HT_MED']).mean()
+                plantios = plantios.groupby(['Talhao', 'Especie'])['HT_MED'].mean().reset_index()
 
             with Sub_Talhao_col2:
             
@@ -387,11 +387,11 @@ if page == 'Sucupira Agroflorestas':
             with Sub_box_col1:
                     
                     
-                map_df['Quantidade'] = 1        
+                map_df['Quantidade'] = 0        
                 for j in range(0, len(map_df.index)):
                     for i in range(0, len(plantios.index)):
-                        if (map_df.iloc[j, 1] == plantios.index[i][0]):
-                            map_df.loc[j, 'Quantidade'] = plantios.index[i][2]
+                        if (map_df.loc[j, 'Name'] == plantios.loc[i, 'Talhao']):
+                            map_df.loc[j, 'Quantidade'] = plantios['HT_MED'][i]
                 
                 gerarMapa.gerarMapa(map_df = map_df) 
 
@@ -1842,7 +1842,7 @@ if page == 'Sucupira Agroflorestas':
         with g1:
 
             dados2 = df.groupby(['Talhao', 'Uso']).size().reset_index(name='counts')
-            dados2['prop'] = dados2.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum())
+            dados2['prop'] = dados2.groupby(['Talhao'])['counts'].apply(lambda x: x / x.sum()).reset_index(drop=True)
             dados2 = dados2.sort_values(by=['Uso', 'prop'])
             dados2['talhao1'] = pd.Categorical(dados2['Talhao'], categories=dados2['Talhao'].unique(), ordered=True)
 
