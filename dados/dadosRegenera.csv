@@ -1,0 +1,200 @@
+TALHAO,especie.planta,nomeCientifico,area,quantidade,densidade,uso
+C01,cacau-seminal-RR,Theobroma cacao,1.4304,596,416.6666666666667,Frutífera
+C01,mogno-africano-gdl,Khaya grandifoliola,1.4304,58,40.54809843400448,Madeireira
+C01,mogno-africano-ivo,Khaya ivorensis,1.4304,26,18.176733780760628,Madeireira
+C01,teca-RO,Tectona grandis,1.4304,80,55.928411633109626,Madeireira
+T01,açaí-paidegua,Euterpe oleracea,2.1353,365,170.93616821992225,Frutífera
+T01,banana-pacovam,Musa spp.,2.1353,684,320.32969606144337,Frutífera
+T01,banana-prata,Musa spp.,2.1353,12,5.6198192291481295,Frutífera
+T01,cacau-seminal-BA,Theobroma cacao,2.1353,324,151.7351191869995,Frutífera
+T01,café-conilon,Coffea canephora,2.1353,12,5.6198192291481295,Frutífera
+T01,castanha-do-brasil,Bertholletia excelsa,2.1353,54,25.28918653116658,Madeireira
+T01,cedro-rosa,Cedrela odorata,2.1353,9,4.214864421861097,Madeireira
+T01,ipê-felpudo,Zeyheria tuberculosa,2.1353,28,13.112911534678968,Madeireira
+T01,jatobá,Hymenaea courbaril,2.1353,51,23.884231723879548,Madeireira
+T01,limão-tahiti-pex-sandiego,Citrus × latifolia,2.1353,172,80.55074228445652,Frutífera
+T01,mogno-africano-gdl,Khaya grandifoliola,2.1353,52,24.352549992975227,Madeireira
+T01,pau-de-balsa,Ochroma pyramidale,2.1353,9,4.214864421861097,Madeireira
+T01,rambutão,Nephelium lappaceum,2.1353,15,7.024774036435161,Frutífera
+T01,teca-RO,Tectona grandis,2.1353,53,24.820868262070903,Madeireira
+T02A,açaí-paidegua,Euterpe oleracea,0.6266,103,164.37918927545482,Frutífera
+T02A,banana-pacovam,Musa spp.,0.6266,108,172.3587615703798,Frutífera
+T02A,banana-prata,Musa spp.,0.6266,25,39.89786147462496,Frutífera
+T02A,limão-tahiti-pex-indio,Citrus × latifolia,0.6266,139,221.83210979891476,Frutífera
+T02A,mogno-africano-gdl,Khaya grandifoliola,0.6266,66,105.33035429300989,Madeireira
+T02A,teca-RO,Tectona grandis,0.6266,48,76.60389403127992,Madeireira
+T02B,açaí-paidegua,Euterpe oleracea,1.1632,122,104.88308115543329,Frutífera
+T02B,banana-pacovam,Musa spp.,1.1632,164,140.99037138927096,Frutífera
+T02B,eucalipto,Eucalyptus sp.,1.1632,10,8.59697386519945,Madeireira
+T02B,jaqueira,Artocarpus heterophyllus,1.1632,5,4.298486932599725,Frutífera
+T02B,limão-tahiti-pex-indio,Citrus × latifolia,1.1632,169,145.2888583218707,Frutífera
+T02B,mogno-africano-gdl,Khaya grandifoliola,1.1632,91,78.23246217331499,Madeireira
+T02B,teca-RO,Tectona grandis,1.1632,54,46.42365887207703,Madeireira
+T03,açaí-paidegua,Euterpe oleracea,2.0223,206,101.86421401374672,Frutífera
+T03,banana-pacovam,Musa spp.,2.0223,33,16.31805370123127,Frutífera
+T03,banana-prata,Musa spp.,2.0223,306,151.31286159323543,Frutífera
+T03,banana-roxa,Musa spp.,2.0223,95,46.97621520051427,Frutífera
+T03,castanha-do-brasil,Bertholletia excelsa,2.0223,67,33.13059387825743,Madeireira
+T03,cedro-rosa,Cedrela odorata,2.0223,2,0.988972951589774,Madeireira
+T03,guanandi,Calophyllum brasiliense,2.0223,47,23.24086436235969,Madeireira
+T03,limão-tahiti-pex-sandiego,Citrus × latifolia,2.0223,449,222.02442763190427,Frutífera
+T03,mogno-africano-gdl,Khaya grandifoliola,2.0223,122,60.327350046976214,Madeireira
+T03,pau-de-balsa,Ochroma pyramidale,2.0223,5,2.472432378974435,Madeireira
+T03,pupunha-comum,Bactris gasipae,2.0223,133,65.76670128071997,Frutífera
+T03,teca-RR,Tectona grandis,2.0223,108,53.4045393858478,Madeireira
+T04A,açaí-chumbinho,Euterpe oleracea,2.0008,514,256.8972411035586,Frutífera
+T04A,açaí-paidegua,Euterpe oleracea,2.0008,369,184.42622950819674,Frutífera
+T04A,banana-pacovam,Musa spp.,2.0008,290,144.94202319072372,Frutífera
+T04A,cacau-clonal-RO,Theobroma cacao,2.0008,930,464.81407437025194,Frutífera
+T04A,eucalipto,Eucalyptus sp.,2.0008,3,1.4994002399040385,Madeireira
+T04A,limão-tahiti-pex-silv,Citrus × latifolia,2.0008,162,80.96761295481808,Frutífera
+T04A,mogno-africano-gdl,Khaya grandifoliola,2.0008,321,160.4358256697321,Madeireira
+T04A,teca-RO,Tectona grandis,2.0008,286,142.94282287085167,Madeireira
+T04B,açaí-chumbinho,Euterpe oleracea,2.2776,155,68.05409202669476,Frutífera
+T04B,açaí-paidegua,Euterpe oleracea,2.2776,188,82.5430277485072,Frutífera
+T04B,andiroba,Carapa guianensis,2.2776,10,4.390586582367404,Madeireira
+T04B,cacau-clonal-RO,Theobroma cacao,2.2776,452,198.45451352300665,Frutífera
+T04B,jatobá,Hymenaea courbaril,2.2776,12,5.268703898840885,Madeireira
+T04B,limão-tahiti-pex-silv,Citrus × latifolia,2.2776,12,5.268703898840885,Frutífera
+T04B,mogno-africano-gdl,Khaya grandifoliola,2.2776,887,389.44502985598876,Madeireira
+T05,açaí-chumbinho,Euterpe oleracea,1.2177,72,59.127864005912784,Frutífera
+T05,açaí-paidegua,Euterpe oleracea,1.2177,272,223.37193068900385,Frutífera
+T05,andiroba,Carapa guianensis,1.2177,63,51.736881005173686,Madeireira
+T05,cacau-clonal-RO,Theobroma cacao,1.2177,330,271.00271002710025,Frutífera
+T05,eucalipto,Eucalyptus sp.,1.2177,39,32.02759300320276,Madeireira
+T05,jatobá,Hymenaea courbaril,1.2177,47,38.597355670526404,Madeireira
+T05,mogno-africano-gdl,Khaya grandifoliola,1.2177,473,388.43721770551036,Madeireira
+T05,pau-de-balsa,Ochroma pyramidale,1.2177,45,36.95491500369549,Madeireira
+T05,teca-RO,Tectona grandis,1.2177,58,47.63077933809641,Madeireira
+T06A,açaí-chumbinho,Euterpe oleracea,1.2179,48,39.41210279990147,Frutífera
+T06A,açaí-paidegua,Euterpe oleracea,1.2179,58,47.622957549880944,Frutífera
+T06A,andiroba,Carapa guianensis,1.2179,50,41.05427374989736,Madeireira
+T06A,cacau-BN34,Theobroma cacao,1.2179,41,33.66450447491584,Frutífera
+T06A,cacau-CCN51,Theobroma cacao,1.2179,50,41.05427374989736,Frutífera
+T06A,cacau-PH16,Theobroma cacao,1.2179,89,73.0766072748173,Frutífera
+T06A,cacau-PS1319,Theobroma cacao,1.2179,76,62.402496099843994,Frutífera
+T06A,cacau-SJ02,Theobroma cacao,1.2179,80,65.68683799983579,Frutífera
+T06A,eucalipto,Eucalyptus sp.,1.2179,25,20.52713687494868,Madeireira
+T06A,jatobá,Hymenaea courbaril,1.2179,35,28.737991624928156,Madeireira
+T06A,mogno-africano-gdl,Khaya grandifoliola,1.2179,284,233.18827489941702,Madeireira
+T06A,teca-RR,Tectona grandis,1.2179,51,41.87535922489531,Madeireira
+T06B,açaí-chumbinho,Euterpe oleracea,1.256,53,42.197452229299365,Frutífera
+T06B,açaí-paidegua,Euterpe oleracea,1.256,59,46.97452229299363,Frutífera
+T06B,cacau-clonal-RO,Theobroma cacao,1.256,91,72.45222929936305,Frutífera
+T06B,mogno-africano-gdl,Khaya grandifoliola,1.256,246,195.85987261146497,Madeireira
+T06B,teca-RR,Tectona grandis,1.256,250,199.04458598726114,Madeireira
+T07A,açaí-chumbinho,Euterpe oleracea,1.0913,119,109.04425914047467,Frutífera
+T07A,açaí-paidegua,Euterpe oleracea,1.0913,222,203.42710528727207,Frutífera
+T07A,andiroba,Carapa guianensis,1.0913,27,24.74113442683039,Madeireira
+T07A,cacau-clonal-RO,Theobroma cacao,1.0913,228,208.92513515990106,Frutífera
+T07A,eucalipto,Eucalyptus sp.,1.0913,1,0.9163383121048292,Madeireira
+T07A,jatobá,Hymenaea courbaril,1.0913,8,7.3307064968386335,Madeireira
+T07A,mogno-africano-gdl,Khaya grandifoliola,1.0913,274,251.0766975167232,Madeireira
+T07A,teca-RO,Tectona grandis,1.0913,219,200.67809035095758,Madeireira
+T07B,açaí-chumbinho,Euterpe oleracea,1.5165,159,104.84668644906034,Frutífera
+T07B,açaí-paidegua,Euterpe oleracea,1.5165,162,106.82492581602374,Frutífera
+T07B,mogno-africano-gdl,Khaya grandifoliola,1.5165,282,185.95450049455985,Madeireira
+T07B,pau-de-balsa,Ochroma pyramidale,1.5165,60,39.56478733926805,Madeireira
+T08,açaí-paidegua,Euterpe oleracea,3.5889,412,114.79840619688483,Frutífera
+T08,banana-pacovam,Musa spp.,3.5889,140,39.00916715428125,Frutífera
+T08,jaqueira,Artocarpus heterophyllus,3.5889,3,0.8359107247345983,Frutífera
+T08,limão-tahiti-pex-sandiego,Citrus × latifolia,3.5889,144,40.12371478726072,Frutífera
+T08,mogno-africano-gdl,Khaya grandifoliola,3.5889,90,25.07732174203795,Madeireira
+T08,teca-RO,Tectona grandis,3.5889,49,13.653208503998439,Madeireira
+T09A,açaí-paidegua,Euterpe oleracea,0.3365,42,124.81426448736998,Frutífera
+T09A,banana-pacovam,Musa spp.,0.3365,40,118.8707280832095,Frutífera
+T09A,banana-prata,Musa spp.,0.3365,14,41.60475482912332,Frutífera
+T09A,jatobá,Hymenaea courbaril,0.3365,8,23.7741456166419,Madeireira
+T09A,laranja-pera,Citrus sinensis,0.3365,82,243.68499257057948,Frutífera
+T09A,limão-tahiti-pex-indio,Citrus × latifolia,0.3365,58,172.36255572065377,Frutífera
+T09A,mogno-africano-gdl,Khaya grandifoliola,0.3365,30,89.15304606240713,Madeireira
+T09A,pupunha-comum,Bactris gasipae,0.3365,82,243.68499257057948,Frutífera
+T09A,teca-RO,Tectona grandis,0.3365,12,35.661218424962854,Madeireira
+T09B,açaí-paidegua,Euterpe oleracea,3.0382,346,113.8832203278257,Frutífera
+T09B,banana-pacovam,Musa spp.,3.0382,223,73.39872292804951,Frutífera
+T09B,jaqueira,Artocarpus heterophyllus,3.0382,185,60.89131722730565,Frutífera
+T09B,limão-tahiti-pex-indio,Citrus × latifolia,3.0382,422,138.89803172931343,Frutífera
+T09B,mogno-africano-gdl,Khaya grandifoliola,3.0382,264,86.89355539464157,Madeireira
+T09B,teca-RO,Tectona grandis,3.0382,135,44.43420446316898,Madeireira
+T10,cacau-clonal-RO,Theobroma cacao,2.6252,676,257.5041901569404,Frutífera
+T10,cacau-seminal-RR,Theobroma cacao,2.6252,91,34.664025598049676,Frutífera
+T10,limão-tahiti-pex-sandiego,Citrus × latifolia,2.6252,399,151.9884199299101,Frutífera
+T10,mogno-africano-gdl,Khaya grandifoliola,2.6252,100,38.09233582203261,Madeireira
+T10,teca-RO,Tectona grandis,2.6252,97,36.94956574737163,Madeireira
+T11,cacau-clonal-RO,Theobroma cacao,0.7518,200,266.02819898909286,Frutífera
+T11,limão-tahiti-pex-indio,Citrus × latifolia,0.7518,112,148.975791433892,Frutífera
+T11,mogno-africano-gdl,Khaya grandifoliola,0.7518,55,73.15775472200053,Madeireira
+T12A,cacau-clonal-RO,Theobroma cacao,0.3503,107,305.45246931201825,Frutífera
+T12A,laranja-pera,Citrus sinensis,0.3503,8,22.837567799029404,Frutífera
+T12A,limão-tahiti-pex-sktropical,Citrus × latifolia,0.3503,35,99.91435912075364,Frutífera
+T12A,mogno-africano-gdl,Khaya grandifoliola,0.3503,9,25.692263773908078,Madeireira
+T12A,roxinho,Peltogyne sp.,0.3503,4,11.418783899514702,Madeireira
+T12A,teca-RO,Tectona grandis,0.3503,4,11.418783899514702,Madeireira
+T12B,cacau-clonal-RO,Theobroma cacao,1.0326,290,280.84447026922334,Frutífera
+T12B,cupuaçu,Theobroma grandiflorum,1.0326,4,3.873716831299632,Frutífera
+T12B,graviola-comum,Annona muricata,1.0326,23,22.273871779972886,Frutífera
+T12B,laranja-pera,Citrus sinensis,1.0326,27,26.147588611272518,Frutífera
+T12B,limão-tahiti-pex-sktropical,Citrus × latifolia,1.0326,104,100.71663761379044,Frutífera
+T12B,mogno-africano-gdl,Khaya grandifoliola,1.0326,27,26.147588611272518,Madeireira
+T12B,roxinho,Peltogyne sp.,1.0326,9,8.715862870424173,Madeireira
+T12B,teca-RO,Tectona grandis,1.0326,8,7.747433662599264,Madeireira
+T13,cacau-seminal-RR,Theobroma cacao,1.7007,730,429.23502087375783,Frutífera
+T13,laranja-pera,Citrus sinensis,1.7007,37,21.755747633327452,Frutífera
+T13,limão-tahiti-pex-indio,Citrus × latifolia,1.7007,210,123.47856764861527,Frutífera
+T13,mogno-africano-gdl,Khaya grandifoliola,1.7007,71,41.74751572881755,Madeireira
+T14,limão-tahiti-pex-silv,Citrus × latifolia,0.9313,8,8.590142811124235,Frutífera
+T14,mogno-africano-gdl,Khaya grandifoliola,0.9313,263,282.4009449157092,Madeireira
+T15,mogno-africano-gdl,Khaya grandifoliola,1.1001,105,95.44586855740387,Madeireira
+T15,teca-RO,Tectona grandis,1.1001,116,105.4449595491319,Madeireira
+T16,açaí-paidegua,Euterpe oleracea,1.4144,180,127.26244343891402,Frutífera
+T16,cacau-seminal-RR,Theobroma cacao,1.4144,185,130.79751131221718,Frutífera
+T16,mogno-africano-gdl,Khaya grandifoliola,1.4144,168,118.77828054298642,Madeireira
+T16,teca-RO,Tectona grandis,1.4144,164,115.95022624434388,Madeireira
+T17A,mogno-africano-gdl,Khaya grandifoliola,2.0406,292,143.0951680878173,Madeireira
+T17A,teca-RO,Tectona grandis,2.0406,263,128.88366166813682,Madeireira
+T17B,mogno-africano-gdl,Khaya grandifoliola,0.5118,163,318.48378272762795,Madeireira
+T18,cacau-clonal-RO,Theobroma cacao,0.5621,95,169.00907311866214,Frutífera
+T18,graviola-comum,Annona muricata,0.5621,1,1.7790428749332858,Frutífera
+T18,mogno-africano-gdl,Khaya grandifoliola,0.5621,87,154.77673011919586,Madeireira
+T18,pau-de-balsa,Ochroma pyramidale,0.5621,89,158.33481586906242,Madeireira
+T18,rambutão,Nephelium lappaceum,0.5621,6,10.674257249599714,Frutífera
+T18,teca-RO,Tectona grandis,0.5621,20,35.580857498665715,Madeireira
+T19A,cacau-seminal-RR,Theobroma cacao,2.2184,41,18.48178867652362,Frutífera
+T19A,limão-tahiti-pex-sktropical,Citrus × latifolia,2.2184,295,132.97872340425533,Frutífera
+T19A,mogno-africano-gdl,Khaya grandifoliola,2.2184,98,44.175982690227194,Madeireira
+T19A,pau-de-balsa,Ochroma pyramidale,2.2184,97,43.72520735665344,Madeireira
+T19A,teca-RO,Tectona grandis,2.2184,98,44.175982690227194,Madeireira
+T19B,açaí-paidegua,Euterpe oleracea,1.4615,165,112.89770783441669,Frutífera
+T19B,banana-pacovam,Musa spp.,1.4615,165,112.89770783441669,Frutífera
+T19B,limão-tahiti-pex-sktropical,Citrus × latifolia,1.4615,167,114.26616489907629,Frutífera
+T19B,mogno-africano-gdl,Khaya grandifoliola,1.4615,169,115.63462196373588,Madeireira
+T19B,pau-de-balsa,Ochroma pyramidale,1.4615,46,31.474512487170713,Madeireira
+T19B,teca-RO,Tectona grandis,1.4615,25,17.105713308244955,Madeireira
+T20,açaí-solteiro,Euterpe precatoria,0.7927,47,59.29103065472436,Frutífera
+T20,cacau-seminal-RR,Theobroma cacao,0.7927,17,21.445691938942854,Frutífera
+T20,mogno-africano-gdl,Khaya grandifoliola,0.7927,77,97.13636937050588,Madeireira
+T20,pau-de-balsa,Ochroma pyramidale,0.7927,96,121.10508389050082,Madeireira
+T20,teca-RO,Tectona grandis,0.7927,83,104.70543711366217,Madeireira
+T21,açaí-solteiro,Euterpe precatoria,1.243,202,162.51005631536603,Frutífera
+T21,banana-pacovam,Musa spp.,1.243,208,167.33708769106997,Frutífera
+T21,limão-tahiti-pex-sktropical,Citrus × latifolia,1.243,212,170.55510860820593,Frutífera
+T21,mogno-africano-gdl,Khaya grandifoliola,1.243,63,50.68382944489139,Madeireira
+T21,teca-RO,Tectona grandis,1.243,60,48.27031375703942,Madeireira
+T22,açaí-solteiro,Euterpe precatoria,1.4042,190,135.30836063238857,Frutífera
+T22,banana-pacovam,Musa spp.,1.4042,198,141.0055547642786,Frutífera
+T22,limão-tahiti-pex-sktropical,Citrus × latifolia,1.4042,199,141.71770403076485,Frutífera
+T22,mogno-africano-gdl,Khaya grandifoliola,1.4042,57,40.59250818971657,Madeireira
+T22,teca-RO,Tectona grandis,1.4042,50,35.60746332431278,Madeireira
+T23,cacau-BN34,Theobroma cacao,0.6684,33,49.371633752244165,Frutífera
+T23,cacau-CCN51,Theobroma cacao,0.6684,27,40.394973070017954,Frutífera
+T23,cacau-PH16,Theobroma cacao,0.6684,5,7.480550568521843,Frutífera
+T23,cacau-PS1319,Theobroma cacao,0.6684,26,38.898862956313586,Frutífera
+T23,cacau-SJ02,Theobroma cacao,0.6684,25,37.40275284260922,Frutífera
+T23,mogno-africano-gdl,Khaya grandifoliola,0.6684,149,222.92040694195094,Madeireira
+T23,pau-de-balsa,Ochroma pyramidale,0.6684,11,16.457211250748056,Madeireira
+T23,teca-RO,Tectona grandis,0.6684,9,13.464991023339318,Madeireira
+T24,açaí-paidegua,Euterpe oleracea,0.5956,95,159.50302216252518,Frutífera
+T24,cacau-clonal-RO,Theobroma cacao,0.5956,86,144.39220953660174,Frutífera
+T24,mogno-africano-gdl,Khaya grandifoliola,0.5956,57,95.7018132975151,Madeireira
+T24,pau-de-balsa,Ochroma pyramidale,0.5956,65,109.13364674278039,Madeireira
+T24,teca-RO,Tectona grandis,0.5956,55,92.3438549361988,Madeireira

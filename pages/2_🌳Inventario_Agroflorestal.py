@@ -2109,7 +2109,13 @@ elif page == 'Regenera':
     folium.GeoJson(geojson_data).add_to(m)
 
     # Carregar o Excel em um DataFrame
-    df_especies = pd.read_excel("dadosRegenera.xlsx")
+    #importar dados do excel de inventário
+    @st.cache(allow_output_mutation=True)
+    def carregarDadosRegenera():    
+        df = pd.read_csv("dados/dadosRegenera.csv")  
+
+        return df 
+    df_especies = carregarDadosRegenera()
 
     # Agrupar por talhão
     grouped = df_especies.groupby(['TALHAO'])
