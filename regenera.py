@@ -77,11 +77,7 @@ def exibirMapa():
     folium.GeoJson(geojson_data).add_to(m)
 
     # Carregar o Excel em um DataFrame
-    @st.cache  # Decorador para armazenar em cache
-    def load_data():
-        df_especies = pd.read_excel("dadosRegenera.xlsx")
-        return df_especies
-    df_especies = load_data()
+    df_especies = pd.read_excel("dadosRegenera.xlsx")
 
     # Agrupar por talhão
     grouped = df_especies.groupby(['TALHAO'])
