@@ -66,18 +66,18 @@ side_bg = 'imagens//image.png'
 #Plano de fundo
 def sidebar_bg(side_bg):
 
-   side_bg_ext = 'png'
+    side_bg_ext = 'png'
 
-   st.markdown(
-      f"""
-      <style>
-      [data-testid="stSidebar"] > div:first-child {{
-          background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()});
-      }}
-      </style>
-      """,
-      unsafe_allow_html=True,
-      )
+    st.markdown(
+        f"""
+        <style>
+        [data-testid="stSidebar"] > div:first-child {{
+        background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()});
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 sidebar_bg(side_bg)
 
@@ -2053,7 +2053,14 @@ if page == 'Sucupira Agroflorestas':
                         mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     )
 
-                if __name__ == "__main__":
-                    main()
+
             else:
                 pass
+elif page == 'Regenera':
+    
+    import regenera
+
+    regenera.teste()
+
+    regenera.exibirMapa()
+
