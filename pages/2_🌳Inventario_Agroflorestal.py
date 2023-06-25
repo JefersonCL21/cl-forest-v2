@@ -2118,7 +2118,7 @@ elif page == 'Regenera':
     df_especies = carregarDadosRegenera()
 
     # Agrupar por talhão
-    grouped = df_especies.groupby(['TALHAO'])
+    grouped = df_especies.groupby(['TALHAO']).reset_index()
 
     # Mapeia os tipos de uso para cores
     uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
