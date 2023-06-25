@@ -2251,7 +2251,7 @@ elif page == 'Regenera':
         popup = folium.Popup(iframe, max_width=500)
 
         # Achar a localização do talhão no DataFrame de talhões
-        st.write(df)
+        
         talhao_df = df.loc[df['TALHAO'] == name]
         
         talhao_row = talhao_df.iloc[0]
