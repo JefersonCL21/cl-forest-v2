@@ -68,12 +68,7 @@ def exibirMapa():
     # Adicione camadas, marcadores ou outras personalizações ao mapa, se desejar
     folium.Marker([0.6182, -60.3455], popup='Regenera').add_to(m)
 
-    # Carrega o arquivo GeoJSON usando o geopandas
-    @st.cache
-    def load_geojson():
-        df = gpd.read_file("Talhao_Regenera.geojson")
-        return df
-    df = load_geojson()
+    df = gpd.read_file("Talhao_Regenera.geojson")
 
     # Converte o GeoDataFrame para formato suportado pelo Folium
     geojson_data = df.to_crs(epsg="4326").to_json()
@@ -84,7 +79,7 @@ def exibirMapa():
     # Carregar o Excel em um DataFrame
     @st.cache  # Decorador para armazenar em cache
     def load_data():
-        df_especies = pd.read_excel("dados/dadosRegenera.xlsx")
+        df_especies = pd.read_excel("dadosRegenera.xlsx")
         return df_especies
     df_especies = load_data()
 
