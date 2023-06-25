@@ -2119,7 +2119,7 @@ elif page == 'Regenera':
 
     # Agrupar por talhão
     grouped = df_especies.groupby(['TALHAO'])
-    st.write(df_especies)
+    st.write(df)
 
     # Mapeia os tipos de uso para cores
     uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
