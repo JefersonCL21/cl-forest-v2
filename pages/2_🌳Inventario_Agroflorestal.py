@@ -2071,6 +2071,7 @@ elif page == 'Regenera':
 
     
     #import regenera
+    st.write("Número de indivíduos por talhão e espécie")
 
     # Criação do mapa
     m = folium.Map(location=[0.6182, -60.3455], zoom_start=16)
@@ -2119,8 +2120,7 @@ elif page == 'Regenera':
 
     # Agrupar por talhão
     grouped = df_especies.groupby("TALHAO")
-    st.write(grouped)
-
+    
     # Mapeia os tipos de uso para cores
     uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
 
