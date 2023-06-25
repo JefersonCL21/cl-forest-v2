@@ -218,10 +218,6 @@ def exibirMapa():
         # Achar a localização do talhão no DataFrame de talhões
         talhao_df = df.loc[df['TALHAO'] == name]
 
-        if talhao_df.empty:
-            print(f'Nenhuma linha encontrada com TALHAO == {name}')
-            continue
-
         talhao_row = talhao_df.iloc[0]
 
         folium.Marker(
