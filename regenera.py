@@ -221,7 +221,13 @@ def exibirMapa():
         popup = folium.Popup(iframe, max_width=500)
 
         # Achar a localização do talhão no DataFrame de talhões
-        talhao_row = df.loc[df['TALHAO'] == name].iloc[0]
+        talhao_df = df.loc[df['TALHAO'] == name]
+
+        if talhao_df.empty:
+            print(f'Nenhuma linha encontrada com TALHAO == {name}')
+            continue
+
+        talhao_row = talhao_df.iloc[0]
 
         folium.Marker(
             location=[talhao_row['geometry'].centroid.y, talhao_row['geometry'].centroid.x],
