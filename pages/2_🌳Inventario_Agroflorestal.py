@@ -2060,7 +2060,5 @@ elif page == 'Regenera':
     
     import regenera
 
-    regenera.teste()
-
     regenera.exibirMapa()
 
