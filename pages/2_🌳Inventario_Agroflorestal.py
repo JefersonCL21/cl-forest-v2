@@ -2118,7 +2118,8 @@ elif page == 'Regenera':
     df_especies = carregarDadosRegenera()
 
     # Agrupar por talhão
-    grouped = df_especies.groupby(['TALHAO']).reset_index()
+    grouped = df_especies.groupby(['TALHAO'])
+    st.write(df_especies)
 
     # Mapeia os tipos de uso para cores
     uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
@@ -2251,7 +2252,7 @@ elif page == 'Regenera':
 
         # Achar a localização do talhão no DataFrame de talhões
         talhao_df = df.loc[df['TALHAO'] == name]
-        st.write(talhao_df)
+        
         talhao_row = talhao_df.iloc[0]
 
         folium.Marker(
