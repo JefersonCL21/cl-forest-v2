@@ -2245,7 +2245,7 @@ elif page == 'Regenera':
 
         # Achar a localização do talhão no DataFrame de talhões
         talhao_df = df.loc[df['TALHAO'] == name]
-
+        st.write(talhao_df)
         talhao_row = talhao_df.iloc[0]
 
         folium.Marker(
