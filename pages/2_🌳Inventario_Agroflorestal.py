@@ -27,6 +27,7 @@ import datetime
 
 
 
+
 st.set_page_config(
     page_title="CL Forest Biometrics",
     page_icon=":seedling:",
@@ -117,7 +118,7 @@ if page == 'Sucupira Agroflorestas':
 
 
     with col1:
-        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP'), horizontal=False)
+        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP', 'Análise de solos'), horizontal=False)
 
     with col2:
         if Uso == 'Inventário resumido':
@@ -294,7 +295,8 @@ if page == 'Sucupira Agroflorestas':
             Talhao = df1.loc[df1['Talhao'].isin(column_name)]
         
 
-        Sub_box_col1, Sub_hist_col2= st.columns(2)
+        Sub_box_col1, Sub_box_Espaco, Sub_hist_col2= st.columns([4,0.5,3])
+
         with Sub_box_col1:
                 
                 
@@ -333,28 +335,76 @@ if page == 'Sucupira Agroflorestas':
                 LI = np.round(classes[:-1],1)
                 LS = np.round(classes[1:],1)
                 clas = [f"[{LI[i]}, {LS[i]})" for i in range(numberClass-1)]
-                df = pd.DataFrame({'LI': LI, 'LS': LS, 'clas': clas})
+                clas_LI = [LI[i] for i in range(numberClass-1)]
+                df = pd.DataFrame({'LI': LI, 'LS': LS, 'clas': clas, 'clas_LI': clas_LI})
                 return df
 
             # Filtre os dados com base na espécie e remova as linhas com valor nulo em 'DAP'
-            dadosHist = df.query('Especie in @especie and not DAP.isnull()')
+            dadosHist = df.query('Especie in @especie and not DAP.isnull() and Talhao in @column_name')
 
+            
             # Crie uma coluna que indica a classe para cada linha com base nos limites das classes
             dadosBar = classe(data=dadosHist['DAP'])
             dadosHist['classe'] = pd.cut(dadosHist['DAP'], bins=dadosBar['LI'].tolist()+[dadosBar['LS'].iloc[-1]], labels=dadosBar['clas'].tolist())
+            dadosHist['LI'] = pd.cut(dadosHist['DAP'], bins=dadosBar['LI'].tolist()+[dadosBar['LS'].iloc[-1]], labels=dadosBar['clas_LI'].tolist())
+            dadosHist['LI'] = pd.to_numeric(dadosHist['LI'])
 
-            # Agrupe as linhas por classe e conte o número de linhas em cada classe
-            dadosBar2 = dadosHist.groupby('classe')['DAP'].agg(['count', 'mean']).reset_index()
-            dadosBar2 = dadosBar2.rename(columns={'count': 'n', 'mean': 'ordem'}).sort_values('ordem')
+            invQualitativo= st.radio('', ['Normal', 'Qualidade Fuste', 'Posição sociológica'], horizontal=True, index=0, key='radio_1')
+            
+            if invQualitativo == 'Posição sociológica':
+                # Agrupe as linhas por classe e conte o número de linhas em cada classe
+                dadosBar2 = dadosHist.groupby(['classe', 'P_S'])['DAP'].agg(['count']).reset_index()
+                dadosBar2['LI'] = dadosHist.groupby(['classe'])['LI'].first().reset_index(drop=True)
 
-            # Remova a coluna 'DAP' do dataframe de saída
-            dadosBar2 = dadosBar2[['classe', 'n', 'ordem']]
+                dadosBar2 = dadosBar2.rename(columns={'count': 'n'})
+                
+                # Remova a coluna 'DAP' do dataframe de saída
+                dadosBar2['LI'] = pd.to_numeric(dadosBar2['LI'])
+                dadosBar2 = dadosBar2[['classe', 'n', 'LI', 'P_S']].sort_values('LI')            
+                dadosBar2['P_S'] = dadosBar2['P_S'].astype(str)
+                
 
-            fig2 = px.bar(dadosBar2, x='classe', y = 'n')
-            fig2.update_traces(marker_color="#1D250E")
-            #fig2.update_layout(plot_bgcolor="#FFFAFA")
-                                                                        
-            st.plotly_chart(fig2, use_container_width=True)            
+                fig2 = px.bar(dadosBar2, x='classe', y = 'n', color="P_S", text="n", color_discrete_sequence=["#1D250E", "#006400","#808000"])
+                fig2.update_layout(legend_title_text='P_S')
+                #fig2.update_layout(plot_bgcolor="#FFFAFA")
+
+                st.plotly_chart(fig2, use_container_width=True) 
+
+            elif invQualitativo == 'Qualidade Fuste':
+                # Agrupe as linhas por classe e conte o número de linhas em cada classe
+                dadosBar2 = dadosHist.groupby(['classe', 'Q_F'])['DAP'].agg(['count']).reset_index()
+                dadosBar2['LI'] = dadosHist.groupby(['classe'])['LI'].first().reset_index(drop=True)
+
+                dadosBar2 = dadosBar2.rename(columns={'count': 'n'})
+                
+                # Remova a coluna 'DAP' do dataframe de saída
+                dadosBar2['LI'] = pd.to_numeric(dadosBar2['LI'])
+                dadosBar2 = dadosBar2[['classe', 'n', 'LI', 'Q_F']].sort_values('LI')            
+                dadosBar2['Q_F'] = dadosBar2['Q_F'].astype(str)
+                
+
+                fig2 = px.bar(dadosBar2, x='classe', y = 'n', color="Q_F", text="n", color_discrete_sequence=["#808000", "#006400","#1D250E"])
+                fig2.update_layout(legend_title_text='Q_F')
+                #fig2.update_layout(plot_bgcolor="#FFFAFA")
+
+                st.plotly_chart(fig2, use_container_width=True)
+
+            else:
+                # Agrupe as linhas por classe e conte o número de linhas em cada classe
+                dadosBar2 = dadosHist.groupby(['classe'])['DAP'].agg(['count']).reset_index()
+                dadosBar2['LI'] = dadosHist.groupby(['classe'])['LI'].first().reset_index(drop=True)
+
+                dadosBar2 = dadosBar2.rename(columns={'count': 'n'})
+                
+                # Remova a coluna 'DAP' do dataframe de saída
+                dadosBar2['LI'] = pd.to_numeric(dadosBar2['LI'])
+                dadosBar2 = dadosBar2[['classe', 'n', 'LI']].sort_values('LI')          
+                
+                
+                fig2 = px.bar(dadosBar2, x='classe', y = 'n')                
+                fig2.update_traces(marker_color="#1D250E")
+
+                st.plotly_chart(fig2, use_container_width=True) 
             
             
 
@@ -1315,7 +1365,7 @@ if page == 'Sucupira Agroflorestas':
                 fig7 = px.bar(resultado_df, x='Data', y='Produção',                
                 text='Produção',
                 title='Produção de cacau (<i>Theobroma cacao</i>) ao longo dos anos',
-                labels={'Data': 'Ano', 'Produção': 'Produção de polpa (kg)'},
+                labels={'Data': 'Ano', 'Produção': 'Produção de amêndoa (kg)'},
                 template='plotly_white')
                 fig7.update_traces(textposition='outside')
                 fig7.update_layout(yaxis_range=[0, resultado_df['Produção'].max()*1.2])
@@ -1919,6 +1969,340 @@ if page == 'Sucupira Agroflorestas':
             mime='text/csv',
         )
 
+    elif Uso == 'Análise de solos':
+
+        st.write('Sistema para análise de solos')
+
+        @st.cache(allow_output_mutation=True)
+        def carregarDadosAnaliseSolo(dados):    
+            df = pd.read_excel("dados/solos.xlsx", sheet_name=dados)  
+            return df 
+
+        analiseTalhao = carregarDadosAnaliseSolo("analise")
+        analiseReferencia = carregarDadosAnaliseSolo("referencia")
+        areaTalhao = carregarDadosAnaliseSolo("areaTalhao")
+
+        # Lista com os talhões
+        talhoes = analiseTalhao['Talhao'].unique()
+        especie = analiseReferencia['especie'].unique()
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            talhoes_selecionados = st.multiselect('Selecione os talhões:', talhoes)
+
+        with col2:
+            especie_selecionada = st.selectbox('Selecione a espécie:', especie)
+
+        colGrafico1, colTabela2 = st.columns(2)
+
+        with  colGrafico1:
+            import plotly.express as px
+            import pandas as pd
+
+            # Inicializar a figura
+            fig = go.Figure()
+
+            # Adicionar linha zero
+            df_zero = analiseTalhao.iloc[:1, 1:].copy()
+            df_zero.loc[:, :] = 0
+
+            fig.add_trace(go.Scatterpolar(
+                r=df_zero.iloc[0, :],
+                theta=df_zero.columns,
+                fill='toself',
+                name='Ideal',
+                line=dict(color='grey', width=1)
+            ))
+
+            # Adicionar linhas para cada talhão selecionado
+            for talhao_selecionado in talhoes_selecionados:
+                df_porcentagem = analiseTalhao.loc[analiseTalhao['Talhao'] == talhao_selecionado].copy()
+                df_porcentagem.iloc[:, 1:] = ((df_porcentagem.iloc[:, 1:] * 100) / analiseReferencia.iloc[:, 1:].values) - 100
+
+                fig.add_trace(go.Scatterpolar(
+                    r=df_porcentagem.iloc[:, 1:].values[0],
+                    theta=df_porcentagem.columns[1:],
+                    fill='toself',
+                    name=talhao_selecionado
+                ))
+
+            # Atualizar layout
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[-100, 100]
+                    )
+                ),
+                showlegend=True,
+                height=650,  # Ajuste o valor de altura conforme necessário
+                title={
+                    'text': "<b>Fertigrama</b>",
+                    'y':1,
+                    'x':0.5,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
+                title_font=dict(
+                    size=30,
+                )
+            )
+
+            # Renderize a figura
+            st.plotly_chart(fig)
+        
+        with colTabela2:
+            st.write("")           
+            st.write("Análise de solos")            
+            st.write(analiseTalhao)
+
+            st.write(f"Valor referência para o {especie_selecionada}")
+            st.write(analiseReferencia)
+
+        colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4= st.columns(4)
+
+        with colFatorAgrupamento1:
+            colunas = analiseTalhao.columns
+            
+            fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
+            # Checando se a coluna é categórica
+            if analiseTalhao[fatorAgrupamento].dtype == 'object':
+                pass
+            else:
+                st.error('Erro: A coluna selecionada não é categórica')
+        with colPCA2:
+            n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.",  min_value=2, max_value=len(colunas)-1))
+
+        with colcluster3:
+            totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.",  min_value=2, max_value=5))
+        with colVarPCA4:
+            valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o total de clusters.",  min_value=1, max_value=n_components))
+        
+
+        import pandas as pd
+        from sklearn.decomposition import PCA
+        from sklearn.cluster import KMeans
+        from sklearn.preprocessing import StandardScaler
+
+        col1_, colGraficoCluster,  colGraficoVarImportancia, col2_ = st.columns([0.5,3,3,1])
+
+        analiseTalhaoPCA = analiseTalhao.copy()
+
+        # Selecionando todas as colunas exceto 'Talhao'
+        scaler = StandardScaler()
+        scaled_df = scaler.fit_transform(analiseTalhaoPCA.drop(fatorAgrupamento, axis=1))
+
+        # Aplicar PCA
+        pca = PCA()
+        pca_result = pca.fit_transform(scaled_df)
+
+        # Adicionar resultados da PCA ao DataFrame de maneira iterativa
+        for i in range(n_components):
+            analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:,i]
+
+        # Criar uma lista com os nomes dos componentes
+        PCA_features = [f'PCA{i+1}' for i in range(n_components)]
+
+        # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
+        kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA[PCA_features])
+
+        analiseTalhaoPCA['Cluster'] = kmeans.labels_
+
+        import numpy as np
+        from numpy.linalg import eig
+        import plotly.graph_objects as go
+
+        # Obter a variância explicada por cada componente principal
+        explained_variance = pca.explained_variance_ratio_
+
+        figPCA = go.Figure()
+
+        # Cores para os diferentes clusters
+        colors = ['red', 'green', 'blue', 'purple', 'orange']  # Customize de acordo com o número de clusters
+
+        for i, cluster in enumerate(analiseTalhaoPCA['Cluster'].unique()):
+            cluster_data = analiseTalhaoPCA[analiseTalhaoPCA['Cluster'] == cluster]
+
+            # Plotar os pontos de cada cluster
+            figPCA.add_trace(go.Scatter(
+                x=cluster_data['PCA1'],
+                y=cluster_data['PCA2'],
+                mode='markers+text',
+                text=cluster_data[fatorAgrupamento],
+                marker=dict(
+                    size=8,
+                    color=colors[i],
+                ),
+                name=f'Cluster {cluster}',
+                textposition="bottom center"
+            ))
+
+            # Calcular a média e a matriz de covariância para os pontos no cluster
+            mean = cluster_data[['PCA1', 'PCA2']].mean().values
+            cov = np.cov(cluster_data[['PCA1', 'PCA2']].values.T)
+
+            # Calcular os autovalores e autovetores da matriz de covariância
+            eig_vals, eig_vecs = eig(cov)
+
+            # Adicionar a elipse para o cluster
+            figPCA.add_shape(
+                type='circle',
+                xref='x', yref='y',
+                x0=mean[0] - 2*np.sqrt(eig_vals[0]),
+                y0=mean[1] - 2*np.sqrt(eig_vals[1]),
+                x1=mean[0] + 2*np.sqrt(eig_vals[0]),
+                y1=mean[1] + 2*np.sqrt(eig_vals[1]),
+                line_color=colors[i],
+                opacity=0.2,  # Faz a elipse semi-transparente
+                fillcolor=colors[i],
+                line_width=2,
+            )
+
+        figPCA.update_layout(
+            title='PCA e Agrupamento K-means dos Talhões',
+            xaxis_title='PCA1 - {0:.1f}%'.format(explained_variance[0]*100),
+            yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100)
+        )
+
+        with colGraficoCluster:
+            st.plotly_chart(figPCA)
+
+
+                # Obtenha os coeficientes de carregamento para o primeiro componente principal
+        loadings = pca.components_[valorPCA-1]
+
+        # Crie um índice para cada variável
+        variables = colunas.drop(fatorAgrupamento)
+
+        # Crie um DataFrame com as variáveis e os carregamentos
+        df_loadings = pd.DataFrame({'Variable': variables, 'Loading': loadings})
+
+        # Ordene o DataFrame pelos valores de carregamento
+        df_loadings = df_loadings.sort_values(by='Loading')
+
+        # Crie o gráfico de barras usando o DataFrame ordenado
+        figImportancia = px.bar(df_loadings, x='Variable', y='Loading', title=f'Contribuição das variáveis para o PCA{valorPCA}', labels={'Variable': 'Variáveis', 'Loading': 'Carregamento'})
+
+        # Altere a orientação do texto do eixo x para vertical
+        figImportancia.update_layout(xaxis_tickangle=-90)
+
+
+        with colGraficoVarImportancia:
+            st.plotly_chart(figImportancia)
+
+        enh_qualFuste = st.expander("Determinação da Necessidade de Calagem para os talhões", expanded=False)
+
+        # Função que calcula o valor de NC
+        def calculate_NC(T, Va, PRNT, Ve, col_Incoporacao):   
+            
+            NC = (T * (Ve - Va) / PRNT) *  (col_Incoporacao / 20 )            
+            if NC < 0:
+                NC = 0
+            else:
+                pass
+            return NC
+        
+
+        def NC_areaTotal(NC, areaTotal): 
+            return NC * areaTotal
+        
+        with enh_qualFuste:  
+
+            col_texto, col_PRNT, col_Ve, col_precoCalcario, col_profundidadeIncoporacao, col_NG, col_precoGesso = st.columns(7)
+
+            with col_texto:
+                st.write('')
+                st.write('')                
+                st.write('NC = T(Ve – Va)/PRNT')
+            with col_PRNT:
+                col_PRNT = float(st.number_input('PRNT ',0.0, 100.0, (85.0)))
+                
+            with col_Ve:
+                col_Ve = int(st.number_input('Ve ',0.0, 100.0, (60.0)))              
+            with col_precoCalcario:
+                precoCalcario = int(st.number_input('Tonelada de calcário (R$)',0.0, 1000.0, (160.0)))              
+            with col_profundidadeIncoporacao:
+                col_Incoporacao = float(st.number_input('Profundidade (cm)',0.0, 60.0, (20.0)))    
+            with col_NG:
+                col_NG = float(st.number_input('Gessagem',0.0, 1.25, (0.25)))
+            with col_precoGesso:
+                precoGesso = int(st.number_input('Tonelada de gesso (R$)',0.0, 1000.0, (160.0))) 
+
+
+
+            # Calculando o valor de NC utilizando a função calculate_NC
+            analiseTalhao_NC = analiseTalhao.copy()
+            analiseTalhao_NC['areaTotal'] = areaTalhao['area']            
+            analiseTalhao_NC['NC'] = analiseTalhao_NC.apply(lambda row: calculate_NC(row['T'], row['Va'], col_PRNT, col_Ve, col_Incoporacao), axis=1)
+            analiseTalhao_NC['NC_HA'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['NC'], row['areaTotal']), axis=1)          
+            
+            
+            # Exibindo o resultado
+            #Criando colunas para colocar os gráficos
+            col_g1, col_g2 = st.columns(2)
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC', ascending=False)
+            figNC = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'], name='NC')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figNC.update_layout(
+                title = 'Calagem',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de calagem (t/ha)'
+            )
+
+            figNG = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'] * col_NG, name='NC'),
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figNG.update_layout(
+                title = 'Gessagem',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de Gessagem (t/ha)'
+            )
+
+            with col_g1:
+                st.plotly_chart(figNC)
+                st.plotly_chart(figNG)
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC_HA', ascending=False)
+            figNC_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'])])
+            figNG_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'] * col_NG)])
+
+            # Atualizar os rótulos dos eixos
+            figNC_areaTotal.update_layout(
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de calagem total (t)'
+            )
+
+            figNG_areaTotal.update_layout(
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de gessagem total (t)'
+            )
+
+            with col_g2:
+                st.plotly_chart(figNC_areaTotal)
+                st.plotly_chart(figNG_areaTotal)
+
+            st.markdown(
+                '<hr style="border-top: 0.5px solid "#1D250E";">',
+                unsafe_allow_html=True
+            )
+
+            m1, m2, m3, m4, m5 = st.columns((2,1,1,1,1))
+            m1.write('')
+            m2.metric(label ='Total de toneladas de Calcário',value = round(analiseTalhao_NC['NC_HA'].sum(),2))
+            m2.metric(label ='Total de toneladas de Gesso',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG,2))
+            m3.metric(label ='Custo total (R$)',value = round(analiseTalhao_NC['NC_HA'].sum() * precoCalcario,2))
+            m3.metric(label ='Custo total (R$) ',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG * precoGesso,2))
+            m1.write('')      
+
+            
 
     else:
         pass
@@ -2056,6 +2440,7 @@ if page == 'Sucupira Agroflorestas':
 
             else:
                 pass
+    
 elif page == 'Regenera':
     import folium
     from streamlit_folium import folium_static
@@ -2069,213 +2454,565 @@ elif page == 'Regenera':
     import plotly.graph_objects as go
     from plotly.offline import plot
 
-    
-    #import regenera
-    st.write("Número de indivíduos por talhão e espécie")
+    colSidebar1, colSidebar2, colSidebar3= st.columns(3)
+    with colSidebar1:
+        mostrar = st.sidebar.radio('Uso da espécie', ('Mapa', 'Análise de solos'), horizontal=False)
 
-    # Criação do mapa
-    m = folium.Map(location=[0.6182, -60.3455], zoom_start=16)
+    if mostrar == 'Mapa':
 
-    # Dicionário com os mapas base personalizados
-    basemaps = {
-        'Google Maps': folium.TileLayer(
-            tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
-            attr='Google',
-            name='Google Maps',
-            overlay=True,
-            control=True
-        ),
-        'Google Satellite Hybrid': folium.TileLayer(
-            tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
-            attr='Google',
-            name='Google Satellite',
-            overlay=True,
-            control=True
-        )
-    }
-
-    # Adiciona os mapas base personalizados ao mapa
-    basemaps['Google Maps'].add_to(m)
-    basemaps['Google Satellite Hybrid'].add_to(m)
-
-    # Adicione camadas, marcadores ou outras personalizações ao mapa, se desejar
-    folium.Marker([0.6182, -60.3455], popup='Regenera').add_to(m)
-
-    df = gpd.read_file("Talhao_Regenera.geojson")
-
-    # Converte o GeoDataFrame para formato suportado pelo Folium
-    geojson_data = df.to_crs(epsg="4326").to_json()
-
-    # Adiciona a camada GeoJSON ao mapa
-    folium.GeoJson(geojson_data).add_to(m)
-
-    # Carregar o Excel em um DataFrame
-    #importar dados do excel de inventário
-    @st.cache(allow_output_mutation=True)
-    def carregarDadosRegenera():    
-        df = pd.read_csv("dados/dadosRegenera.csv")  
-
-        return df 
-    df_especies = carregarDadosRegenera()
-
-    # Agrupar por talhão
-    grouped = df_especies.groupby("TALHAO")
-    
-    # Mapeia os tipos de uso para cores
-    uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
-
-    #quant_densidade = st.selectbox('Informações sobre o número de individuos por espécies',['Total de individuos','Densidade de individuos'])
-    # Para cada grupo (talhão)...
-    for name, group in grouped:
-        # Separa as espécies por uso
-
-        frutifera = group[group['uso'] == 'Frutífera'].sort_values('quantidade')
-        madeireira = group[group['uso'] == 'Madeireira'].sort_values('quantidade')
-
-        max_quantidade = group['quantidade'].max()
-        area = round(group['area'].max(), 2)
-
-        # Configuração dos botões para alternar entre os gráficos
-        buttons = [
-            dict(
-                label=f'Área total {area}',
-                method='update',
-                args=[{'visible': [True, True, False, False]}]
-            ),
-            dict(
-                label='Hectare',
-                method='update',
-                args=[{'visible': [False, False, True, True]}]
-            )
-        ]
-
-        # Criação dos dois gráficos de barras
-        fig = go.Figure()
-
-
-        fig.add_trace(go.Bar(
-            x=frutifera['quantidade'],
-            y=frutifera['especie.planta'],
-            orientation='h',
-            marker_color=uso_cores['Frutífera'],
-            name='Frutífera',
-            text=round(frutifera['quantidade'], 0),
-            hovertemplate='Quantidade: %{x}<br>Espécie: %{y}'
-        ))
-
-        fig.add_trace(go.Bar(
-            x=madeireira['quantidade'],
-            y=madeireira['especie.planta'],
-            orientation='h',
-            marker_color=uso_cores['Madeireira'],
-            name='Madeireira',
-            text=round(madeireira['quantidade'], 0),
-            hovertemplate='Quantidade: %{x}<br>Espécie: %{y}'
-        ))
-
-
-        fig.add_trace(go.Bar(
-            x=frutifera['densidade'],
-            y=frutifera['especie.planta'],
-            orientation='h',
-            marker_color=uso_cores['Frutífera'],
-            name='Frutífera',
-            text=round(frutifera['densidade'], 0),
-            hovertemplate='Densidade: %{x}<br>Espécie: %{y}',
-            visible=False
-        ))
-
-        fig.add_trace(go.Bar(
-            x=madeireira['densidade'],
-            y=madeireira['especie.planta'],
-            orientation='h',
-            marker_color=uso_cores['Madeireira'],
-            name='Madeireira',
-            text=round(madeireira['densidade'], 0),
-            hovertemplate='Densidade: %{x}<br>Espécie: %{y}',
-            visible=False
-        ))
-
+        col1, col2, col3, col4 = st.columns([6, 3, 3, 1])
         
-        fig.update_layout(xaxis=dict(range=[0, max_quantidade+70]))
 
+        with col1:
+            #import regenera
+            st.write("Número de indivíduos por talhão e espécie")
 
+            # Criação do mapa
+            m = folium.Map(location=[0.6182, -60.3455], zoom_start=16)
 
-        # Configuração dos botões no layout
-        fig.update_layout(
-            updatemenus=[
-                dict(
-                    type='buttons',
-                    buttons=buttons,
-                    direction='left',
-                    pad={'r': 0, 't': 0},
-                    showactive=True,
-                    x=0.1,
-                    xanchor='right',
-                    y=1.15,
-                    yanchor='bottom'
+            # Dicionário com os mapas base personalizados
+            basemaps = {
+                'Google Maps': folium.TileLayer(
+                    tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                    attr='Google',
+                    name='Google Maps',
+                    overlay=True,
+                    control=True
+                ),
+                'Google Satellite Hybrid': folium.TileLayer(
+                    tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+                    attr='Google',
+                    name='Google Satellite',
+                    overlay=True,
+                    control=True
                 )
-            ]
+            }
+
+            # Adiciona os mapas base personalizados ao mapa
+            basemaps['Google Maps'].add_to(m)
+            basemaps['Google Satellite Hybrid'].add_to(m)
+
+            # Adicione camadas, marcadores ou outras personalizações ao mapa, se desejar
+            folium.Marker([0.6182, -60.3455], popup='Regenera').add_to(m)
+
+            df = gpd.read_file("Talhao_Regenera.geojson")
+
+            # Converte o GeoDataFrame para formato suportado pelo Folium
+            geojson_data = df.to_crs(epsg="4326").to_json()
+
+            # Adiciona a camada GeoJSON ao mapa
+            folium.GeoJson(geojson_data).add_to(m)
+
+            # Carregar o Excel em um DataFrame
+            #importar dados do excel de inventário
+            @st.cache(allow_output_mutation=True)
+            def carregarDadosRegenera():    
+                df = pd.read_csv("dados/dadosRegenera.csv")  
+
+                return df 
+            df_especies = carregarDadosRegenera()
+
+            # Agrupar por talhão
+            grouped = df_especies.groupby("TALHAO")
+            
+            # Mapeia os tipos de uso para cores
+            uso_cores = {'Frutífera': 'blue', 'Madeireira': 'green'}  # adicione ou altere conforme necessário
+
+            #quant_densidade = st.selectbox('Informações sobre o número de individuos por espécies',['Total de individuos','Densidade de individuos'])
+            # Para cada grupo (talhão)...
+            for name, group in grouped:
+                # Separa as espécies por uso
+
+                frutifera = group[group['uso'] == 'Frutífera'].sort_values('quantidade')
+                madeireira = group[group['uso'] == 'Madeireira'].sort_values('quantidade')
+
+                max_quantidade = group['quantidade'].max()
+                area = round(group['area'].max(), 2)
+
+                # Configuração dos botões para alternar entre os gráficos
+                buttons = [
+                    dict(
+                        label=f'Área total {area}',
+                        method='update',
+                        args=[{'visible': [True, True, False, False]}]
+                    ),
+                    dict(
+                        label='Hectare',
+                        method='update',
+                        args=[{'visible': [False, False, True, True]}]
+                    )
+                ]
+
+                # Criação dos dois gráficos de barras
+                fig = go.Figure()
+
+
+                fig.add_trace(go.Bar(
+                    x=frutifera['quantidade'],
+                    y=frutifera['especie.planta'],
+                    orientation='h',
+                    marker_color=uso_cores['Frutífera'],
+                    name='Frutífera',
+                    text=round(frutifera['quantidade'], 0),
+                    hovertemplate='Quantidade: %{x}<br>Espécie: %{y}'
+                ))
+
+                fig.add_trace(go.Bar(
+                    x=madeireira['quantidade'],
+                    y=madeireira['especie.planta'],
+                    orientation='h',
+                    marker_color=uso_cores['Madeireira'],
+                    name='Madeireira',
+                    text=round(madeireira['quantidade'], 0),
+                    hovertemplate='Quantidade: %{x}<br>Espécie: %{y}'
+                ))
+
+
+                fig.add_trace(go.Bar(
+                    x=frutifera['densidade'],
+                    y=frutifera['especie.planta'],
+                    orientation='h',
+                    marker_color=uso_cores['Frutífera'],
+                    name='Frutífera',
+                    text=round(frutifera['densidade'], 0),
+                    hovertemplate='Densidade: %{x}<br>Espécie: %{y}',
+                    visible=False
+                ))
+
+                fig.add_trace(go.Bar(
+                    x=madeireira['densidade'],
+                    y=madeireira['especie.planta'],
+                    orientation='h',
+                    marker_color=uso_cores['Madeireira'],
+                    name='Madeireira',
+                    text=round(madeireira['densidade'], 0),
+                    hovertemplate='Densidade: %{x}<br>Espécie: %{y}',
+                    visible=False
+                ))
+
+                
+                fig.update_layout(xaxis=dict(range=[0, max_quantidade+70]))
+
+
+
+                # Configuração dos botões no layout
+                fig.update_layout(
+                    updatemenus=[
+                        dict(
+                            type='buttons',
+                            buttons=buttons,
+                            direction='left',
+                            pad={'r': 0, 't': 0},
+                            showactive=True,
+                            x=0.1,
+                            xanchor='right',
+                            y=1.15,
+                            yanchor='bottom'
+                        )
+                    ]
+                )
+
+                # Ajuste a posição da legenda
+                fig.update_layout(
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.15,
+                        xanchor="right",
+                        x=1
+                    )
+                )
+
+                fig.update_layout(
+                    autosize=False,
+                    width=500,
+                    height=300,
+                    margin=dict(
+                        l=10,  # margem esquerda
+                        r=20,  # margem direita
+                        b=0,  # margem inferior
+                        t=20,  # margem superior
+                        pad=5 # padding
+                    )
+                )
+
+
+                # Converte o gráfico para HTML
+                plot_html = plot(fig, output_type='div', include_plotlyjs='cdn')
+
+                # Adiciona o gráfico HTML ao popup
+                iframe = folium.IFrame(html=plot_html, width=550, height=360)
+                popup = folium.Popup(iframe, max_width=500)
+
+                # Achar a localização do talhão no DataFrame de talhões
+                
+                talhao_df = df.loc[df['TALHAO'] == name]
+                
+                talhao_row = talhao_df.iloc[0]
+
+                folium.Marker(
+                    location=[talhao_row['geometry'].centroid.y, talhao_row['geometry'].centroid.x],
+                    popup=popup,
+                    icon=DivIcon(
+                        icon_size=(150,36),
+                        icon_anchor=(0,0),
+                        html="""
+                        <div style="font-size: 12pt; color: red;">
+                        <svg width="150" height="36">
+                            <text x="0" y="15">%s</text>
+                        </svg>
+                        </div>
+                        """ % name,
+                    )
+                ).add_to(m)
+                
+                
+            # Adiciona o controle de camadas ao mapa
+            folium.LayerControl(position='topleft').add_to(m)
+
+            # Exibir o mapa no Streamlit
+            folium_static(m, height=700)
+
+        with col2:
+
+            #Essa função é para ser modificada, fiz isso apenas para ser um referencial para os calculos espectrais e vigor das plantas
+            def ParaCodarDepois():
+                # Crie um selectbox com os nomes dos talhões
+                df1 = gpd.read_file("Talhao_Regenera.geojson")
+                selected_talhao = st.selectbox('Selecione um talhão', df1['TALHAO'].unique())
+
+                # Filtrar o DataFrame com base no talhão selecionado
+                df_selected = df1[df1['TALHAO'] == selected_talhao]
+
+                import streamlit as st
+                from PIL import Image
+
+                #image = Image.open("imagens/cup.jpeg")
+                
+                #st.image(image, caption='Sunrise by the mountains')
+
+                import cv2
+                import numpy as np
+                import matplotlib.pyplot as plt
+                import streamlit as st
+
+                # Carregar a imagem (certifique-se de ter importado a imagem conforme mencionado anteriormente)
+                imagem = cv2.imread("imagens/cup.jpeg")
+
+                # Converter a imagem para o formato RGB (se necessário)
+                imagem_rgb = cv2.cvtColor(imagem, cv2.COLOR_BGR2RGB)
+
+                # Extrair as bandas vermelha, verde e azul da imagem
+                red = imagem_rgb[:, :, 0].astype(np.float32)
+                green = imagem_rgb[:, :, 1].astype(np.float32)
+                blue = imagem_rgb[:, :, 2].astype(np.float32)
+
+                # Calcular os índices de vegetação
+                ndvi = (red - blue) / (red + blue)
+                evi = 2.5 * ((red - blue) / (red + 6 * green - 7.5 * blue + 1))
+                gndvi = (green - red) / (green + red)
+                
+                PRI = (blue - red) / (blue + red)
+                sPRI = (PRI + 1) / 2
+                co2flux = gndvi * sPRI
+                co2fluxEVI = sPRI * (evi - gndvi)* 3.5
+                #exg = 2 * green - red - blue
+                #gli = green / blueS
+                #ndre = (red - green) / (red + green)
+                #grvi = (green - red) / (green + red)
+                #rndvi = (red - green) / (red + green)
+                #savi = ((red - blue) / (red + blue + 0.5)) * 1.5
+                #tgi = -0.5 * green + 0.5 * blue + red
+
+                # Aplicar a falsa cor
+                cmap = plt.cm.jet  # Escolher mapa de cores (você pode escolher outro mapa de cores)
+                ndvi_color = cmap(ndvi)  # Aplicar mapa de cores ao NDVI
+                evi_color = cmap(evi)  # Aplicar mapa de cores ao EVI
+                gndvi_color = cmap(gndvi)  # Aplicar mapa de cores ao GNDVI
+                sPRI_color = cmap(sPRI)
+                co2flux_color = cmap(co2flux)
+                co2fluxEVI_color = cmap(co2fluxEVI)
+                #exg_color = cmap(exg)  # Aplicar mapa de cores ao ExG
+                #gli_color = cmap(gli)  # Aplicar mapa de cores ao GLI
+                #ndre_color = cmap(ndre)  # Aplicar mapa de cores ao NDRE
+                #grvi_color = cmap(grvi)  # Aplicar mapa de cores ao GRVI
+                #rndvi_color = cmap(rndvi)  # Aplicar mapa de cores ao RNDVI
+                #savi_color = cmap(savi)  # Aplicar mapa de cores ao SAVI
+                #tgi_color = cmap(tgi)  # Aplicar mapa de cores ao TGI
+
+                # Criar a figura com subplots
+                fig, axs = plt.subplots(6, 1, figsize=(8, 18))  # Aumentar o número de subplots e ajustar o tamanho
+
+                # Lista de índices de vegetação e títulos
+                indices_vegetacao = [imagem_rgb, evi_color, gndvi_color, sPRI_color, co2flux_color, co2fluxEVI_color]  # Adicionar a imagem RGB à lista
+                titulos = ['RGB', 'EVI', 'GNDVI', 'sPRI', 'co2flux', 'co2fluxEVI']  # Adicionar "RGB" aos títulos
+
+                # Plotar as imagens de índices de vegetação em falsa cor nos subplots
+                for i, ax in enumerate(axs.flat):
+                    ax.imshow(indices_vegetacao[i])
+                    ax.set_title(titulos[i])
+                    ax.axis('off')
+
+                # Ajustar o espaçamento entre os subplots
+                plt.tight_layout()
+
+                # Exibir a figura
+                # plt.show() -> Comentado porque o Streamlit irá gerenciar a exibição
+
+                # Usar o Streamlit para exibir as imagens
+                st.pyplot(fig)
+
+                import plotly.graph_objects as go
+
+                # Dados de exemplo do EVI ao longo do tempo
+                tempo = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # Valores de tempo
+                evi = [0.2, 0.3, 0.5, 0.6, 0.4, 0.7, 0.8, 0.6, 0.5, 0.3]  # Valores de EVI correspondentes
+
+                # Criar figura e adicionar o gráfico do EVI
+                figEVI = go.Figure()
+                figEVI.add_trace(go.Scatter(x=tempo, y=evi, mode='lines+markers', name='EVI'))
+
+                # Personalizar o layout do gráfico
+                figEVI.update_layout(
+                    title='Comportamento do EVI ao longo do tempo',
+                    xaxis_title='Tempo',
+                    yaxis_title='EVI',
+                    showlegend=True,
+                    hovermode='x'
+                )
+
+                st.plotly_chart(figEVI, use_container_width=True)
+
+
+        with col3:
+            #selected_especie = st.selectbox('Selecione uma especie', df_especies['especie.planta'].unique())
+            pass
+
+
+    elif mostrar == 'Análise de solos':
+
+        st.write('Sistema para análise de solos')
+
+        @st.cache(allow_output_mutation=True)
+        def carregarDadosAnaliseSolo(dados):    
+            df = pd.read_excel("dados/solos.xlsx", sheet_name=dados)  
+            return df 
+
+        analiseTalhao = carregarDadosAnaliseSolo("analise")
+        analiseReferencia = carregarDadosAnaliseSolo("referencia")
+
+        # Lista com os talhões
+        talhoes = analiseTalhao['Talhao'].unique()
+        especie = analiseReferencia['especie'].unique()
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            talhoes_selecionados = st.multiselect('Selecione os talhões:', talhoes)
+
+        with col2:
+            especie_selecionada = st.selectbox('Selecione a espécie:', especie)
+
+        colGrafico1, colTabela2 = st.columns(2)
+
+        with  colGrafico1:
+            import plotly.express as px
+            import pandas as pd
+
+            # Inicializar a figura
+            fig = go.Figure()
+
+            # Adicionar linha zero
+            df_zero = analiseTalhao.iloc[:1, 1:].copy()
+            df_zero.loc[:, :] = 0
+
+            fig.add_trace(go.Scatterpolar(
+                r=df_zero.iloc[0, :],
+                theta=df_zero.columns,
+                fill='toself',
+                name='Ideal',
+                line=dict(color='grey', width=1)
+            ))
+
+            # Adicionar linhas para cada talhão selecionado
+            for talhao_selecionado in talhoes_selecionados:
+                df_porcentagem = analiseTalhao.loc[analiseTalhao['Talhao'] == talhao_selecionado].copy()
+                df_porcentagem.iloc[:, 1:] = ((df_porcentagem.iloc[:, 1:] * 100) / analiseReferencia.iloc[:, 1:].values) - 100
+
+                fig.add_trace(go.Scatterpolar(
+                    r=df_porcentagem.iloc[:, 1:].values[0],
+                    theta=df_porcentagem.columns[1:],
+                    fill='toself',
+                    name=talhao_selecionado
+                ))
+
+            # Atualizar layout
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[-100, 100]
+                    )
+                ),
+                showlegend=True,
+                height=650,  # Ajuste o valor de altura conforme necessário
+                title={
+                    'text': "<b>Fertigrama</b>",
+                    'y':1,
+                    'x':0.5,
+                    'xanchor': 'center',
+                    'yanchor': 'top'
+                },
+                title_font=dict(
+                    size=30,
+                )
+            )
+
+            # Renderize a figura
+            st.plotly_chart(fig)
+        
+        with colTabela2:
+            st.write("")           
+            st.write("Análise de solos")            
+            st.write(analiseTalhao)
+
+            st.write(f"Valor referência para o {especie_selecionada}")
+            st.write(analiseReferencia)
+
+        colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4= st.columns(4)
+
+        with colFatorAgrupamento1:
+            colunas = analiseTalhao.columns
+            
+            fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
+            # Checando se a coluna é categórica
+            if analiseTalhao[fatorAgrupamento].dtype == 'object':
+                pass
+            else:
+                st.error('Erro: A coluna selecionada não é categórica')
+        with colPCA2:
+            n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.",  min_value=2, max_value=len(colunas)-1))
+
+        with colcluster3:
+            totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.",  min_value=2, max_value=5))
+        with colVarPCA4:
+            valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o total de clusters.",  min_value=1, max_value=n_components))
+        
+
+        import pandas as pd
+        from sklearn.decomposition import PCA
+        from sklearn.cluster import KMeans
+        from sklearn.preprocessing import StandardScaler
+
+        col1_, colGraficoCluster,  colGraficoVarImportancia, col2_ = st.columns([0.5,3,3,1])
+
+        analiseTalhaoPCA = analiseTalhao.copy()
+
+        # Selecionando todas as colunas exceto 'Talhao'
+        scaler = StandardScaler()
+        scaled_df = scaler.fit_transform(analiseTalhaoPCA.drop(fatorAgrupamento, axis=1))
+
+        # Aplicar PCA
+        pca = PCA()
+        pca_result = pca.fit_transform(scaled_df)
+
+        # Adicionar resultados da PCA ao DataFrame de maneira iterativa
+        for i in range(n_components):
+            analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:,i]
+
+        # Criar uma lista com os nomes dos componentes
+        PCA_features = [f'PCA{i+1}' for i in range(n_components)]
+
+        # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
+        kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA[PCA_features])
+
+        analiseTalhaoPCA['Cluster'] = kmeans.labels_
+
+        import numpy as np
+        from numpy.linalg import eig
+        import plotly.graph_objects as go
+
+        # Obter a variância explicada por cada componente principal
+        explained_variance = pca.explained_variance_ratio_
+
+        figPCA = go.Figure()
+
+        # Cores para os diferentes clusters
+        colors = ['red', 'green', 'blue', 'purple', 'orange']  # Customize de acordo com o número de clusters
+
+        for i, cluster in enumerate(analiseTalhaoPCA['Cluster'].unique()):
+            cluster_data = analiseTalhaoPCA[analiseTalhaoPCA['Cluster'] == cluster]
+
+            # Plotar os pontos de cada cluster
+            figPCA.add_trace(go.Scatter(
+                x=cluster_data['PCA1'],
+                y=cluster_data['PCA2'],
+                mode='markers+text',
+                text=cluster_data[fatorAgrupamento],
+                marker=dict(
+                    size=8,
+                    color=colors[i],
+                ),
+                name=f'Cluster {cluster}',
+                textposition="bottom center"
+            ))
+
+            # Calcular a média e a matriz de covariância para os pontos no cluster
+            mean = cluster_data[['PCA1', 'PCA2']].mean().values
+            cov = np.cov(cluster_data[['PCA1', 'PCA2']].values.T)
+
+            # Calcular os autovalores e autovetores da matriz de covariância
+            eig_vals, eig_vecs = eig(cov)
+
+            # Adicionar a elipse para o cluster
+            figPCA.add_shape(
+                type='circle',
+                xref='x', yref='y',
+                x0=mean[0] - 2*np.sqrt(eig_vals[0]),
+                y0=mean[1] - 2*np.sqrt(eig_vals[1]),
+                x1=mean[0] + 2*np.sqrt(eig_vals[0]),
+                y1=mean[1] + 2*np.sqrt(eig_vals[1]),
+                line_color=colors[i],
+                opacity=0.2,  # Faz a elipse semi-transparente
+                fillcolor=colors[i],
+                line_width=2,
+            )
+
+        figPCA.update_layout(
+            title='PCA e Agrupamento K-means dos Talhões',
+            xaxis_title='PCA1 - {0:.1f}%'.format(explained_variance[0]*100),
+            yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100)
         )
 
-        # Ajuste a posição da legenda
-        fig.update_layout(
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.15,
-                xanchor="right",
-                x=1
-            )
-        )
-
-        fig.update_layout(
-            autosize=False,
-            width=500,
-            height=300,
-            margin=dict(
-                l=10,  # margem esquerda
-                r=20,  # margem direita
-                b=0,  # margem inferior
-                t=20,  # margem superior
-                pad=5 # padding
-            )
-        )
+        with colGraficoCluster:
+            st.plotly_chart(figPCA)
 
 
-        # Converte o gráfico para HTML
-        plot_html = plot(fig, output_type='div', include_plotlyjs='cdn')
+                # Obtenha os coeficientes de carregamento para o primeiro componente principal
+        loadings = pca.components_[valorPCA-1]
 
-        # Adiciona o gráfico HTML ao popup
-        iframe = folium.IFrame(html=plot_html, width=550, height=360)
-        popup = folium.Popup(iframe, max_width=500)
+        # Crie um índice para cada variável
+        variables = colunas.drop(fatorAgrupamento)
 
-        # Achar a localização do talhão no DataFrame de talhões
+        # Crie um DataFrame com as variáveis e os carregamentos
+        df_loadings = pd.DataFrame({'Variable': variables, 'Loading': loadings})
+
+        # Ordene o DataFrame pelos valores de carregamento
+        df_loadings = df_loadings.sort_values(by='Loading')
+
+        # Crie o gráfico de barras usando o DataFrame ordenado
+        figImportancia = px.bar(df_loadings, x='Variable', y='Loading', title=f'Contribuição das variáveis para o PCA{valorPCA}', labels={'Variable': 'Variáveis', 'Loading': 'Carregamento'})
+
+        # Altere a orientação do texto do eixo x para vertical
+        figImportancia.update_layout(xaxis_tickangle=-90)
+
+
+        with colGraficoVarImportancia:
+            st.plotly_chart(figImportancia)
+
         
-        talhao_df = df.loc[df['TALHAO'] == name]
-        
-        talhao_row = talhao_df.iloc[0]
 
-        folium.Marker(
-            location=[talhao_row['geometry'].centroid.y, talhao_row['geometry'].centroid.x],
-            popup=popup,
-            icon=DivIcon(
-                icon_size=(150,36),
-                icon_anchor=(0,0),
-                html="""
-                <div style="font-size: 12pt; color: red;">
-                <svg width="150" height="36">
-                    <text x="0" y="15">%s</text>
-                </svg>
-                </div>
-                """ % name,
-            )
-        ).add_to(m)
         
-        
-    # Adiciona o controle de camadas ao mapa
-    folium.LayerControl(position='topleft').add_to(m)
 
-    # Exibir o mapa no Streamlit
-    folium_static(m, height=700)
-
+    else:
+        pass        
