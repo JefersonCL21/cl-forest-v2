@@ -2401,7 +2401,7 @@ if page == 'Sucupira Agroflorestas':
 
             return k20_kg_ha * 100 / col_Potassagem_Preencher
 
-        def Nc_potassaio(K, T):
+        def Nc_potassio(K, T):
             K_CTC_ph7 = 100 * K / T
             K_porc = 3 - K_CTC_ph7
             k_cmol_dm3 = K_porc * T / 100
@@ -2422,7 +2422,7 @@ if page == 'Sucupira Agroflorestas':
             with col2_Potassagem_Preencher:
                 col_Potassagem_Preencher = float(st.number_input('Recomendação no adubo a preencher (%) ',0.0, 100.0, (2.80)))
 
-            analiseTalhao_NC['K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_potassaio(row['K'], row['T']), axis=1)
+            analiseTalhao_NC['K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_potassio(row['K'], row['T']), axis=1)
             analiseTalhao_NC['Recomendação de K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_RecomendadaK2O(row['K2O (kg/ha)'], col_Potassagem_Preencher), axis=1)
             analiseTalhao_NC['K2O total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['K2O (kg/ha)'], row['areaTotal']), axis=1)
             analiseTalhao_NC['Recomendação area total (kg)'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Recomendação de K2O (kg/ha)'], row['areaTotal']), axis=1)
