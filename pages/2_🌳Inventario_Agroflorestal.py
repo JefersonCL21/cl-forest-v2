@@ -2300,9 +2300,199 @@ if page == 'Sucupira Agroflorestas':
             m2.metric(label ='Total de toneladas de Gesso',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG,2))
             m3.metric(label ='Custo total (R$)',value = round(analiseTalhao_NC['NC_HA'].sum() * precoCalcario,2))
             m3.metric(label ='Custo total (R$) ',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG * precoGesso,2))
-            m1.write('')      
+            m1.write('')    
 
+        
+        enh_Fosfatagem = st.expander("Determinação da Necessidade fosfatagem para os talhões", expanded=False)  
+
+
+        def Qntd_AduboFosfatado(P2O5_kgha, col_Porc_Perda, Preencher): 
+            Qntd_AduboFosfatado_kgha =  P2O5_kgha * 100 / col_Porc_Perda
+            Qntd_AduboFosfatado_kgha  = 100 * Qntd_AduboFosfatado_kgha / Preencher   
+            return Qntd_AduboFosfatado_kgha
+
+        def P2O5_kgHa(col_fosfatagemIdeal, P_meh1): 
+            P2O5_kgha = (col_fosfatagemIdeal - P_meh1) * 4.58 # multipilcar por 2 para transformar em P e depois por 2.29 para P205 kg/ha (4.58)
+            return P2O5_kgha
+        
+        with enh_Fosfatagem:
+            col1_fosfatagemIdeal, col2_Porc_Perda, col3_Preencher= st.columns(3)
+            with col1_fosfatagemIdeal:
+                col_fosfatagemIdeal = float(st.number_input('Nível ideal de fósforo',0.0, 50.0, (20.0)))
+
+            with col2_Porc_Perda:
+                col_Porc_Perda = float(st.number_input('Perda considerada (%)',0.0, 100.0, (20.0)))
+                            
+            with col3_Preencher:
+                Preencher = float(st.number_input('Recomendação no adubo a preencher (%)', 0.0, 100.0, (12.0)))
+
+            analiseTalhao_NC['P2O5 (kg/ha)'] = analiseTalhao_NC.apply(lambda row: P2O5_kgHa(col_fosfatagemIdeal, row['P meh-¹']), axis=1)
+            analiseTalhao_NC['P2O5 total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['P2O5 (kg/ha)'], row['areaTotal']), axis=1)
+            analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Qntd_AduboFosfatado(row['P2O5 (kg/ha)'], col_Porc_Perda, Preencher), axis=1)
+            analiseTalhao_NC['Qntd_AduboFosfatado_Total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Qntd_AduboFosfatado (kg/ha)'], row['areaTotal']), axis=1)            
             
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 (kg/ha)', ascending=False)
+            figP2O5 = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 (kg/ha)'], name='P2O5 (kg/ha)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figP2O5.update_layout(
+                title = 'P2O5',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção (kg/ha)'
+            )
+
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 total', ascending=False)
+            figP2O5_total = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 total'], name='P2O5 total (kg)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figP2O5_total.update_layout(
+                title = 'P2O5',
+                xaxis_title='Talhão',
+                yaxis_title='Correção em área total (kg)'
+            )
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado (kg/ha)', ascending=False)
+            figAdubo_Fosfatado = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'], name='Adubo Fosfatado (kg/ha)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figAdubo_Fosfatado.update_layout(
+                title = 'Adubo Fosfatado',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção (kg/ha)'
+            )
+
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado_Total', ascending=False)
+            figAdubo_Fosfatado_total = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado_Total'], name='Adubo Fosfatado área total (kg)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figAdubo_Fosfatado_total.update_layout(
+                title = 'Adubo Fosfatado',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção área total'
+            )
+
+
+            #Criando colunas para colocar os gráficos
+            col_g1, col_g2 = st.columns(2)
+
+            with col_g1:
+                st.plotly_chart(figP2O5)           
+                st.plotly_chart(figAdubo_Fosfatado)
+            with col_g2:
+                st.plotly_chart(figP2O5_total)
+                st.plotly_chart(figAdubo_Fosfatado_total)
+
+        enh_Potassagem = st.expander("Determinação da Necessidade potassagem para os talhões", expanded=False) 
+
+        def Nc_RecomendadaK2O(k20_kg_ha, col_Potassagem_Preencher):
+
+            return k20_kg_ha * 100 / col_Potassagem_Preencher
+
+        def Nc_potassaio(K, T):
+            K_CTC_ph7 = 100 * K / T
+            K_porc = 3 - K_CTC_ph7
+            k_cmol_dm3 = K_porc * T / 100
+            k_mg_dm3 = k_cmol_dm3 * 390
+            k_kg_ha = k_mg_dm3 * 2
+            k20_kg_ha = k_kg_ha * 1.205
+
+            return k20_kg_ha
+        
+
+        
+        with enh_Potassagem:
+
+            col1_Potassagem, col2_Potassagem_Preencher = st.columns(2)
+            with col1_Potassagem:
+                col_Potassagem = float(st.number_input('Preço (R$/KG) ',0.0, 50.0, (20.0)))
+
+            with col2_Potassagem_Preencher:
+                col_Potassagem_Preencher = float(st.number_input('Recomendação no adubo a preencher (%) ',0.0, 100.0, (2.80)))
+
+            analiseTalhao_NC['K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_potassaio(row['K'], row['T']), axis=1)
+            analiseTalhao_NC['Recomendação de K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_RecomendadaK2O(row['K2O (kg/ha)'], col_Potassagem_Preencher), axis=1)
+            analiseTalhao_NC['K2O total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['K2O (kg/ha)'], row['areaTotal']), axis=1)
+            analiseTalhao_NC['Recomendação area total (kg)'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Recomendação de K2O (kg/ha)'], row['areaTotal']), axis=1)
+            
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O (kg/ha)', ascending=False)
+            figK2O = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O (kg/ha)'], name='K2O (kg/ha)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figK2O.update_layout(
+                title = 'K2O',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção (kg/ha)'
+            )
+
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O total', ascending=False)
+            figK2O_total = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O total'], name='K2O total (kg)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figK2O_total.update_layout(
+                title = 'K2O',
+                xaxis_title='Talhão',
+                yaxis_title='Correção em área total (kg)'
+            )
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação de K2O (kg/ha)', ascending=False)
+            figAdubo_Potassio = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação de K2O (kg/ha)'], name='Recomendação de K2O (kg/ha)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figAdubo_Potassio.update_layout(
+                title = 'Recomendação de K2O (kg/ha)',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção (kg/ha)'
+            )
+
+
+            # Criar o gráfico de barras
+            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação area total (kg)', ascending=False)
+            figAdubo_Potassio_total = go.Figure(data=[
+                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação area total (kg)'], name='Adubo k2o área total (kg)')
+                    ])
+
+            # Atualizar os rótulos dos eixos
+            figAdubo_Potassio_total.update_layout(
+                title = 'Adubo K20',
+                xaxis_title='Talhão',
+                yaxis_title='Necessidade de correção área total'
+            )
+
+
+            #Criando colunas para colocar os gráficos
+            col_g1, col_g2 = st.columns(2)
+
+            with col_g1:
+                st.plotly_chart(figK2O)           
+                st.plotly_chart(figAdubo_Potassio)
+            with col_g2:
+                st.plotly_chart(figK2O_total)
+                st.plotly_chart(figAdubo_Potassio_total)
+            
+        enh_Calculos = st.expander("Exibir tabela com os valores de adubação por talhão", expanded=False)
+        with enh_Calculos:
+            st.write(analiseTalhao_NC)    
 
     else:
         pass
