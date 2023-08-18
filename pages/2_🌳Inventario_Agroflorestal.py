@@ -118,7 +118,7 @@ if page == 'Sucupira Agroflorestas':
 
 
     with col1:
-        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP', 'Análise de solos'), horizontal=False)
+        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP', 'Análise de solos', 'Formigueiros'), horizontal=False)
 
     with col2:
         if Uso == 'Inventário resumido':
@@ -2493,6 +2493,72 @@ if page == 'Sucupira Agroflorestas':
         enh_Calculos = st.expander("Exibir tabela com os valores de adubação por talhão", expanded=False)
         with enh_Calculos:
             st.write(analiseTalhao_NC)    
+
+
+            
+
+    elif Uso == 'Formigueiros':
+
+        
+        import streamlit as st
+        import pandas as pd
+        import requests
+        from io import StringIO
+        from streamlit_folium import folium_static
+        
+        URL = "https://docs.google.com/spreadsheets/d/1RMc28dzaQBwCBCHjHGDQhmvzqp0SAiS2fIameQXC89A/gviz/tq?tqx=out:csv&sheet=Formiga_Cad"
+        # Obter os dados da planilha
+        response = requests.get(URL)
+        data = response.content.decode('utf-8')
+        df_formiga = pd.read_csv(StringIO(data))
+
+        # Criar um mapa base
+        m = folium.Map(location=[-13.331891, -39.311357,], zoom_start=16)    
+        
+        # Dicionário com os mapas base personalizados
+        basemaps = {
+            'Google Maps': folium.TileLayer(
+                tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+                attr='Google',
+                name='Google Maps',
+                overlay=True,
+                control=True
+            ),
+            'Google Satellite Hybrid': folium.TileLayer(
+                tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+                attr='Google',
+                name='Google Satellite',
+                overlay=True,
+                control=True
+            )
+        }
+
+        # Adiciona os mapas base personalizados ao mapa
+        basemaps['Google Maps'].add_to(m)
+        basemaps['Google Satellite Hybrid'].add_to(m)
+
+        # Dicionário de cores para cada tipo de formiga
+        color_dict = {
+            'Saúvas': 'blue',
+            'Quenquéns': 'red',
+            # Adicione outros tipos de formiga e cores conforme necessário
+        }
+
+        # Adicionar marcadores para cada ponto
+        for index, row in df_formiga.iterrows():
+            lat, long = row['LatLong'].split(',')
+            color = color_dict.get(row['TipoFormiga'], 'green')  # 'green' é a cor padrão se o tipo de formiga não estiver no dicionário
+            folium.Marker(
+                location=[float(lat), float(long)],
+                icon=folium.Icon(color=color),
+                popup=row['TipoFormiga']  # Adiciona um popup com o tipo de formiga
+            ).add_to(m)
+
+        # Mostrar o mapa no Streamlit
+        folium_static(m, height=900, width=900)
+        
+        # Exibir os dados no Streamlit
+        #st.write(df_formiga)
 
     else:
         pass
