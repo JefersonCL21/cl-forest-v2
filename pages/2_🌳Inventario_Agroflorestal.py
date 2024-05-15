@@ -118,7 +118,7 @@ if page == 'Sucupira Agroflorestas':
 
 
     with col1:
-        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP', 'Análise de solos', 'Formigueiros'), horizontal=False)
+        Uso = st.sidebar.radio('Uso da espécie', ('Inventário resumido', 'Madeira', 'Frutíferas', 'Especiárias', 'IRP', 'Análise de solos', 'Formigueiros', 'Imagens'), horizontal=False)
 
     with col2:
         if Uso == 'Inventário resumido':
@@ -1971,550 +1971,585 @@ if page == 'Sucupira Agroflorestas':
 
     elif Uso == 'Análise de solos':
 
-        st.write('Sistema para análise de solos')
 
+#teste de importação
         @st.cache(allow_output_mutation=True)
-        def carregarDadosAnaliseSolo(dados):    
-            df = pd.read_excel("dados/solos1.xlsx", sheet_name=dados)  
-            return df 
+        def carregarDadosAnaliseSolo(uploaded_file, sheet_name):
+            if uploaded_file is not None:
+                df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
+                return df
+            return pd.DataFrame()
 
-        analiseTalhao = carregarDadosAnaliseSolo("analise")
-        analiseReferencia = carregarDadosAnaliseSolo("referencia")
-        areaTalhao = carregarDadosAnaliseSolo("areaTalhao")
+        st.title('Aplicativo de Análise de Solo')
 
-        # Lista com os talhões
-        talhoes = analiseTalhao['Talhao'].unique()
-        especie = analiseReferencia['especie'].unique()
+        # Upload do arquivo Excel
+        uploaded_file = st.file_uploader("Escolha um arquivo Excel", type="xlsx")
 
-        col1, col2 = st.columns(2)
+        if uploaded_file is not None:
+            # Seleção da aba do Excel para cada análise
+            sheet_analise = st.selectbox("Selecione a aba para Análise de Talhão:", pd.ExcelFile(uploaded_file).sheet_names)
+            sheet_referencia = st.selectbox("Selecione a aba para Análise de Referência:", pd.ExcelFile(uploaded_file).sheet_names)
+            sheet_area_talhao = st.selectbox("Selecione a aba para Área do Talhão:", pd.ExcelFile(uploaded_file).sheet_names)
 
-        with col1:
-            talhoes_selecionados = st.multiselect('Selecione os talhões:', talhoes)
+            # Carregar os dados
+            analiseTalhao = carregarDadosAnaliseSolo(uploaded_file, sheet_analise)
+            analiseReferencia = carregarDadosAnaliseSolo(uploaded_file, sheet_referencia)
+            areaTalhao = carregarDadosAnaliseSolo(uploaded_file, sheet_area_talhao)
 
-        with col2:
-            especie_selecionada = st.selectbox('Selecione a espécie:', especie)
+            if not analiseTalhao.empty and not analiseReferencia.empty and not areaTalhao.empty:
+                # Lista com os talhões
+                talhoes = analiseTalhao['Talhao'].unique()
+                especie = analiseReferencia['especie'].unique()
 
-        colGrafico1, colTabela2 = st.columns(2)
+                col1, col2 = st.columns(2)
 
-        with  colGrafico1:
-            import plotly.express as px
-            import pandas as pd
+                with col1:
+                    talhoes_selecionados = st.multiselect('Selecione os talhões:', talhoes)
 
-            # Inicializar a figura
-            fig = go.Figure()
+                with col2:
+                    especie_selecionada = st.selectbox('Selecione a espécie:', especie)
 
-            # Adicionar linha zero
-            df_zero = analiseTalhao.iloc[:1, 1:].copy()
-            df_zero.loc[:, :] = 0
+                colGrafico1, colTabela2 = st.columns(2)
 
-            fig.add_trace(go.Scatterpolar(
-                r=df_zero.iloc[0, :],
-                theta=df_zero.columns,
-                fill='toself',
-                name='Ideal',
-                line=dict(color='grey', width=1)
-            ))
+                with  colGrafico1:
+                    import plotly.express as px
+                    import pandas as pd
 
-            # Adicionar linhas para cada talhão selecionado
-            for talhao_selecionado in talhoes_selecionados:
-                df_porcentagem = analiseTalhao.loc[analiseTalhao['Talhao'] == talhao_selecionado].copy()
-                df_porcentagem.iloc[:, 1:] = ((df_porcentagem.iloc[:, 1:] * 100) / analiseReferencia.iloc[:, 1:].values) - 100
+                    # Inicializar a figura
+                    fig = go.Figure()
 
-                fig.add_trace(go.Scatterpolar(
-                    r=df_porcentagem.iloc[:, 1:].values[0],
-                    theta=df_porcentagem.columns[1:],
-                    fill='toself',
-                    name=talhao_selecionado
-                ))
+                    # Adicionar linha zero
+                    df_zero = analiseTalhao.iloc[:1, 1:].copy()
+                    df_zero.loc[:, :] = 0
 
-            # Atualizar layout
-            fig.update_layout(
-                polar=dict(
-                    radialaxis=dict(
-                        visible=True,
-                        range=[-100, 100]
+                    fig.add_trace(go.Scatterpolar(
+                        r=df_zero.iloc[0, :],
+                        theta=df_zero.columns,
+                        fill='toself',
+                        name='Ideal',
+                        line=dict(color='grey', width=1)
+                    ))
+
+                    # Adicionar linhas para cada talhão selecionado
+                    for talhao_selecionado in talhoes_selecionados:
+                        df_porcentagem = analiseTalhao.loc[analiseTalhao['Talhao'] == talhao_selecionado].copy()
+                        df_porcentagem.iloc[:, 1:] = ((df_porcentagem.iloc[:, 1:] * 100) / analiseReferencia.iloc[:, 1:].values) - 100
+
+                        fig.add_trace(go.Scatterpolar(
+                            r=df_porcentagem.iloc[:, 1:].values[0],
+                            theta=df_porcentagem.columns[1:],
+                            fill='toself',
+                            name=talhao_selecionado
+                        ))
+
+                    # Atualizar layout
+                    fig.update_layout(
+                        polar=dict(
+                            radialaxis=dict(
+                                visible=True,
+                                range=[-100, 100]
+                            )
+                        ),
+                        showlegend=True,
+                        height=650,  # Ajuste o valor de altura conforme necessário
+                        title={
+                            'text': "<b>Fertigrama</b>",
+                            'y':1,
+                            'x':0.5,
+                            'xanchor': 'center',
+                            'yanchor': 'top'
+                        },
+                        title_font=dict(
+                            size=30,
+                        )
                     )
-                ),
-                showlegend=True,
-                height=650,  # Ajuste o valor de altura conforme necessário
-                title={
-                    'text': "<b>Fertigrama</b>",
-                    'y':1,
-                    'x':0.5,
-                    'xanchor': 'center',
-                    'yanchor': 'top'
-                },
-                title_font=dict(
-                    size=30,
-                )
-            )
 
-            # Renderize a figura
-            st.plotly_chart(fig)
-        
-        with colTabela2:
-            st.write("")           
-            st.write("Análise de solos")            
-            st.write(analiseTalhao)
-
-            st.write(f"Valor referência para o {especie_selecionada}")
-            st.write(analiseReferencia)
-
-        colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4= st.columns(4)
-
-        with colFatorAgrupamento1:
-            colunas = analiseTalhao.columns
-            
-            fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
-            # Checando se a coluna é categórica
-            if analiseTalhao[fatorAgrupamento].dtype == 'object':
-                pass
-            else:
-                st.error('Erro: A coluna selecionada não é categórica')
-        with colPCA2:
-            n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.",  min_value=2, max_value=len(colunas)-1))
-
-        with colcluster3:
-            totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.",  min_value=2, max_value=5))
-        with colVarPCA4:
-            valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o total de clusters.",  min_value=1, max_value=n_components))
-        
-
-        import pandas as pd
-        from sklearn.decomposition import PCA
-        from sklearn.cluster import KMeans
-        from sklearn.preprocessing import StandardScaler
-
-        col1_, colGraficoCluster,  colGraficoVarImportancia, col2_ = st.columns([0.5,3,3,1])
-
-        analiseTalhaoPCA = analiseTalhao.copy()
-
-        # Selecionando todas as colunas exceto 'Talhao'
-        scaler = StandardScaler()
-        scaled_df = scaler.fit_transform(analiseTalhaoPCA.drop(fatorAgrupamento, axis=1))
-
-        # Aplicar PCA
-        pca = PCA()
-        pca_result = pca.fit_transform(scaled_df)
-
-        # Adicionar resultados da PCA ao DataFrame de maneira iterativa
-        for i in range(n_components):
-            analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:,i]
-
-        # Criar uma lista com os nomes dos componentes
-        PCA_features = [f'PCA{i+1}' for i in range(n_components)]
-
-        # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
-        kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA[PCA_features])
-
-        analiseTalhaoPCA['Cluster'] = kmeans.labels_
-
-        import numpy as np
-        from numpy.linalg import eig
-        import plotly.graph_objects as go
-
-        # Obter a variância explicada por cada componente principal
-        explained_variance = pca.explained_variance_ratio_
-
-        figPCA = go.Figure()
-
-        # Cores para os diferentes clusters
-        colors = ['red', 'green', 'blue', 'purple', 'orange']  # Customize de acordo com o número de clusters
-
-        for i, cluster in enumerate(analiseTalhaoPCA['Cluster'].unique()):
-            cluster_data = analiseTalhaoPCA[analiseTalhaoPCA['Cluster'] == cluster]
-
-            # Plotar os pontos de cada cluster
-            figPCA.add_trace(go.Scatter(
-                x=cluster_data['PCA1'],
-                y=cluster_data['PCA2'],
-                mode='markers+text',
-                text=cluster_data[fatorAgrupamento],
-                marker=dict(
-                    size=8,
-                    color=colors[i],
-                ),
-                name=f'Cluster {cluster}',
-                textposition="bottom center"
-            ))
-
-            # Calcular a média e a matriz de covariância para os pontos no cluster
-            mean = cluster_data[['PCA1', 'PCA2']].mean().values
-            cov = np.cov(cluster_data[['PCA1', 'PCA2']].values.T)
-
-            # Calcular os autovalores e autovetores da matriz de covariância
-            eig_vals, eig_vecs = eig(cov)
-
-            # Adicionar a elipse para o cluster
-            figPCA.add_shape(
-                type='circle',
-                xref='x', yref='y',
-                x0=mean[0] - 2*np.sqrt(eig_vals[0]),
-                y0=mean[1] - 2*np.sqrt(eig_vals[1]),
-                x1=mean[0] + 2*np.sqrt(eig_vals[0]),
-                y1=mean[1] + 2*np.sqrt(eig_vals[1]),
-                line_color=colors[i],
-                opacity=0.2,  # Faz a elipse semi-transparente
-                fillcolor=colors[i],
-                line_width=2,
-            )
-
-        figPCA.update_layout(
-            title='PCA e Agrupamento K-means dos Talhões',
-            xaxis_title='PCA1 - {0:.1f}%'.format(explained_variance[0]*100),
-            yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100)
-        )
-
-        with colGraficoCluster:
-            st.plotly_chart(figPCA)
-
-
-                # Obtenha os coeficientes de carregamento para o primeiro componente principal
-        loadings = pca.components_[valorPCA-1]
-
-        # Crie um índice para cada variável
-        variables = colunas.drop(fatorAgrupamento)
-
-        # Crie um DataFrame com as variáveis e os carregamentos
-        df_loadings = pd.DataFrame({'Variable': variables, 'Loading': loadings})
-
-        # Ordene o DataFrame pelos valores de carregamento
-        df_loadings = df_loadings.sort_values(by='Loading')
-
-        # Crie o gráfico de barras usando o DataFrame ordenado
-        figImportancia = px.bar(df_loadings, x='Variable', y='Loading', title=f'Contribuição das variáveis para o PCA{valorPCA}', labels={'Variable': 'Variáveis', 'Loading': 'Carregamento'})
-
-        # Altere a orientação do texto do eixo x para vertical
-        figImportancia.update_layout(xaxis_tickangle=-90)
-
-
-        with colGraficoVarImportancia:
-            st.plotly_chart(figImportancia)
-
-        enh_qualFuste = st.expander("Determinação da Necessidade de Calagem para os talhões", expanded=False)
-
-        # Função que calcula o valor de NC
-        def calculate_NC(T, Va, PRNT, Ve, col_Incoporacao):   
-            
-            NC = (T * (Ve - Va) / PRNT) *  (col_Incoporacao / 20 )            
-            if NC < 0:
-                NC = 0
-            else:
-                pass
-            return NC
-        
-
-        def NC_areaTotal(NC, areaTotal): 
-            return NC * areaTotal
-        
-        with enh_qualFuste:  
-
-            col_texto, col_PRNT, col_Ve, col_precoCalcario, col_profundidadeIncoporacao, col_NG, col_precoGesso = st.columns(7)
-
-            with col_texto:
-                st.write('')
-                st.write('')                
-                st.write('NC = T(Ve – Va)/PRNT')
-            with col_PRNT:
-                col_PRNT = float(st.number_input('PRNT ',0.0, 100.0, (85.0)))
+                    # Renderize a figura
+                    st.plotly_chart(fig)
                 
-            with col_Ve:
-                col_Ve = int(st.number_input('Ve ',0.0, 100.0, (60.0)))              
-            with col_precoCalcario:
-                precoCalcario = int(st.number_input('Tonelada de calcário (R$)',0.0, 1000.0, (160.0)))              
-            with col_profundidadeIncoporacao:
-                col_Incoporacao = float(st.number_input('Profundidade (cm)',0.0, 60.0, (20.0)))    
-            with col_NG:
-                col_NG = float(st.number_input('Gessagem',0.0, 1.25, (0.25)))
-            with col_precoGesso:
-                precoGesso = int(st.number_input('Tonelada de gesso (R$)',0.0, 1000.0, (160.0))) 
+                with colTabela2:
+                    st.write("")           
+                    st.write("Análise de solos")            
+                    st.write(analiseTalhao)
+
+                    st.write(f"Valor referência para o {especie_selecionada}")
+                    st.write(analiseReferencia)
+
+                colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4= st.columns(4)
+
+                with colFatorAgrupamento1:
+                    colunas = analiseTalhao.columns
+                    
+                    fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
+                    # Checando se a coluna é categórica
+                    if analiseTalhao[fatorAgrupamento].dtype == 'object':
+                        pass
+                    else:
+                        st.error('Erro: A coluna selecionada não é categórica')
+                with colPCA2:
+                    n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.",  min_value=2, max_value=len(colunas)-1))
+
+                with colcluster3:
+                    totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.",  min_value=2, max_value=5))
+                with colVarPCA4:
+                    valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o total de clusters.",  min_value=1, max_value=n_components))
+                
+
+                import pandas as pd
+                from sklearn.decomposition import PCA
+                from sklearn.cluster import KMeans
+                from sklearn.preprocessing import StandardScaler
+
+                col1_, colGraficoCluster,  colGraficoVarImportancia, col2_ = st.columns([0.5,3,3,1])
+
+                analiseTalhaoPCA = analiseTalhao.copy()
+
+                # Selecionando todas as colunas exceto 'Talhao'
+                scaler = StandardScaler()
+                scaled_df = scaler.fit_transform(analiseTalhaoPCA.drop(fatorAgrupamento, axis=1))
+
+                # Aplicar PCA
+                pca = PCA()
+                pca_result = pca.fit_transform(scaled_df)
+
+                # Adicionar resultados da PCA ao DataFrame de maneira iterativa
+                for i in range(n_components):
+                    analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:,i]
+
+                # Criar uma lista com os nomes dos componentes
+                PCA_features = [f'PCA{i+1}' for i in range(n_components)]
+
+                # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
+                kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA[PCA_features])
+
+                analiseTalhaoPCA['Cluster'] = kmeans.labels_
+
+                import numpy as np
+                from numpy.linalg import eig
+                import plotly.graph_objects as go
+
+                # Obter a variância explicada por cada componente principal
+                explained_variance = pca.explained_variance_ratio_
+
+                figPCA = go.Figure()
+
+                # Cores para os diferentes clusters
+                colors = ['red', 'green', 'blue', 'purple', 'orange']  # Customize de acordo com o número de clusters
+
+                for i, cluster in enumerate(analiseTalhaoPCA['Cluster'].unique()):
+                    cluster_data = analiseTalhaoPCA[analiseTalhaoPCA['Cluster'] == cluster]
+
+                    # Plotar os pontos de cada cluster
+                    figPCA.add_trace(go.Scatter(
+                        x=cluster_data['PCA1'],
+                        y=cluster_data['PCA2'],
+                        mode='markers+text',
+                        text=cluster_data[fatorAgrupamento],
+                        marker=dict(
+                            size=8,
+                            color=colors[i],
+                        ),
+                        name=f'Cluster {cluster}',
+                        textposition="bottom center"
+                    ))
+
+                    # Calcular a média e a matriz de covariância para os pontos no cluster
+                    mean = cluster_data[['PCA1', 'PCA2']].mean().values
+                    cov = np.cov(cluster_data[['PCA1', 'PCA2']].values.T)
+
+                    # Calcular os autovalores e autovetores da matriz de covariância
+                    eig_vals, eig_vecs = eig(cov)
+
+                    # Adicionar a elipse para o cluster
+                    figPCA.add_shape(
+                        type='circle',
+                        xref='x', yref='y',
+                        x0=mean[0] - 2*np.sqrt(eig_vals[0]),
+                        y0=mean[1] - 2*np.sqrt(eig_vals[1]),
+                        x1=mean[0] + 2*np.sqrt(eig_vals[0]),
+                        y1=mean[1] + 2*np.sqrt(eig_vals[1]),
+                        line_color=colors[i],
+                        opacity=0.2,  # Faz a elipse semi-transparente
+                        fillcolor=colors[i],
+                        line_width=2,
+                    )
+
+                figPCA.update_layout(
+                    title='PCA e Agrupamento K-means dos Talhões',
+                    xaxis_title='PCA1 - {0:.1f}%'.format(explained_variance[0]*100),
+                    yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100)
+                )
+
+                with colGraficoCluster:
+                    st.plotly_chart(figPCA)
+
+
+                        # Obtenha os coeficientes de carregamento para o primeiro componente principal
+                loadings = pca.components_[valorPCA-1]
+
+                # Crie um índice para cada variável
+                variables = colunas.drop(fatorAgrupamento)
+
+                # Crie um DataFrame com as variáveis e os carregamentos
+                df_loadings = pd.DataFrame({'Variable': variables, 'Loading': loadings})
+
+                # Ordene o DataFrame pelos valores de carregamento
+                df_loadings = df_loadings.sort_values(by='Loading')
+
+                # Crie o gráfico de barras usando o DataFrame ordenado
+                figImportancia = px.bar(df_loadings, x='Variable', y='Loading', title=f'Contribuição das variáveis para o PCA{valorPCA}', labels={'Variable': 'Variáveis', 'Loading': 'Carregamento'})
+
+                # Altere a orientação do texto do eixo x para vertical
+                figImportancia.update_layout(xaxis_tickangle=-90)
+
+
+                with colGraficoVarImportancia:
+                    st.plotly_chart(figImportancia)
+
+                enh_qualFuste = st.expander("Determinação da Necessidade de Calagem para os talhões", expanded=False)
+
+                # Função que calcula o valor de NC
+                def calculate_NC(T, Va, PRNT, Ve, col_Incoporacao):   
+                    
+                    NC = (T * (Ve - Va) / PRNT) *  (col_Incoporacao / 20 )            
+                    if NC < 0:
+                        NC = 0
+                    else:
+                        pass
+                    return NC
+                
+
+                def NC_areaTotal(NC, areaTotal): 
+                    return NC * areaTotal
+                
+                with enh_qualFuste:  
+
+                    col_texto, col_PRNT, col_Ve, col_precoCalcario, col_profundidadeIncoporacao, col_NG, col_precoGesso = st.columns(7)
+
+                    with col_texto:
+                        st.write('')
+                        st.write('')                
+                        st.write('NC = T(Ve – Va)/PRNT')
+                    with col_PRNT:
+                        col_PRNT = float(st.number_input('PRNT ',0.0, 100.0, (85.0)))
+                        
+                    with col_Ve:
+                        col_Ve = int(st.number_input('Ve ',0.0, 100.0, (60.0)))              
+                    with col_precoCalcario:
+                        precoCalcario = int(st.number_input('Tonelada de calcário (R$)',0.0, 1000.0, (160.0)))              
+                    with col_profundidadeIncoporacao:
+                        col_Incoporacao = float(st.number_input('Profundidade (cm)',0.0, 60.0, (20.0)))    
+                    with col_NG:
+                        col_NG = float(st.number_input('Gessagem',0.0, 1.25, (0.25)))
+                    with col_precoGesso:
+                        precoGesso = int(st.number_input('Tonelada de gesso (R$)',0.0, 1000.0, (160.0))) 
 
 
 
-            # Calculando o valor de NC utilizando a função calculate_NC
-            analiseTalhao_NC = analiseTalhao.copy()
-            analiseTalhao_NC['areaTotal'] = areaTalhao['area']            
-            analiseTalhao_NC['NC'] = analiseTalhao_NC.apply(lambda row: calculate_NC(row['T'], row['Va'], col_PRNT, col_Ve, col_Incoporacao), axis=1)
-            analiseTalhao_NC['NC_HA'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['NC'], row['areaTotal']), axis=1)          
-            
-            
-            # Exibindo o resultado
-            #Criando colunas para colocar os gráficos
-            col_g1, col_g2 = st.columns(2)
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC', ascending=False)
-            figNC = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'], name='NC')
-                    ])
+                    # Calculando o valor de NC utilizando a função calculate_NC
+                    analiseTalhao_NC = analiseTalhao.copy()
+                    analiseTalhao_NC['areaTotal'] = areaTalhao['area']            
+                    analiseTalhao_NC['NC'] = analiseTalhao_NC.apply(lambda row: calculate_NC(row['T'], row['Va'], col_PRNT, col_Ve, col_Incoporacao), axis=1)
+                    analiseTalhao_NC['NC_HA'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['NC'], row['areaTotal']), axis=1)          
+                    
+                    
+                    # Exibindo o resultado
+                    #Criando colunas para colocar os gráficos
+                    col_g1, col_g2 = st.columns(2)
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC', ascending=False)
+                    figNC = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'], name='NC')
+                            ])
 
-            # Atualizar os rótulos dos eixos
-            figNC.update_layout(
-                title = 'Calagem',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de calagem (t/ha)'
-            )
+                    # Atualizar os rótulos dos eixos
+                    figNC.update_layout(
+                        title = 'Calagem',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de calagem (t/ha)'
+                    )
 
-            figNG = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'] * col_NG, name='NC'),
-                    ])
+                    figNG = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC'] * col_NG, name='NC'),
+                            ])
 
-            # Atualizar os rótulos dos eixos
-            figNG.update_layout(
-                title = 'Gessagem',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de Gessagem (t/ha)'
-            )
+                    # Atualizar os rótulos dos eixos
+                    figNG.update_layout(
+                        title = 'Gessagem',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de Gessagem (t/ha)'
+                    )
 
-            with col_g1:
-                st.plotly_chart(figNC)
-                st.plotly_chart(figNG)
+                    with col_g1:
+                        st.plotly_chart(figNC)
+                        st.plotly_chart(figNG)
 
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC_HA', ascending=False)
-            figNC_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'])])
-            figNG_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'] * col_NG)])
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='NC_HA', ascending=False)
+                    figNC_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'])])
+                    figNG_areaTotal = go.Figure(data=[go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['NC_HA'] * col_NG)])
 
-            # Atualizar os rótulos dos eixos
-            figNC_areaTotal.update_layout(
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de calagem total (t)'
-            )
+                    # Atualizar os rótulos dos eixos
+                    figNC_areaTotal.update_layout(
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de calagem total (t)'
+                    )
 
-            figNG_areaTotal.update_layout(
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de gessagem total (t)'
-            )
+                    figNG_areaTotal.update_layout(
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de gessagem total (t)'
+                    )
 
-            with col_g2:
-                st.plotly_chart(figNC_areaTotal)
-                st.plotly_chart(figNG_areaTotal)
+                    with col_g2:
+                        st.plotly_chart(figNC_areaTotal)
+                        st.plotly_chart(figNG_areaTotal)
 
-            st.markdown(
-                '<hr style="border-top: 0.5px solid "#1D250E";">',
-                unsafe_allow_html=True
-            )
+                    st.markdown(
+                        '<hr style="border-top: 0.5px solid "#1D250E";">',
+                        unsafe_allow_html=True
+                    )
 
-            m1, m2, m3, m4, m5 = st.columns((2,1,1,1,1))
-            m1.write('')
-            m2.metric(label ='Total de toneladas de Calcário',value = round(analiseTalhao_NC['NC_HA'].sum(),2))
-            m2.metric(label ='Total de toneladas de Gesso',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG,2))
-            m3.metric(label ='Custo total (R$)',value = round(analiseTalhao_NC['NC_HA'].sum() * precoCalcario,2))
-            m3.metric(label ='Custo total (R$) ',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG * precoGesso,2))
-            m1.write('')    
+                    m1, m2, m3, m4, m5 = st.columns((2,1,1,1,1))
+                    m1.write('')
+                    m2.metric(label ='Total de toneladas de Calcário',value = round(analiseTalhao_NC['NC_HA'].sum(),2))
+                    m2.metric(label ='Total de toneladas de Gesso',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG,2))
+                    m3.metric(label ='Custo total (R$)',value = round(analiseTalhao_NC['NC_HA'].sum() * precoCalcario,2))
+                    m3.metric(label ='Custo total (R$) ',value = round(analiseTalhao_NC['NC_HA'].sum() * col_NG * precoGesso,2))
+                    m1.write('')    
 
-        
-        enh_Fosfatagem = st.expander("Determinação da Necessidade fosfatagem para os talhões", expanded=False)  
-
-
-        def Qntd_AduboFosfatado(P2O5_kgha, col_Porc_Perda, Preencher): 
-            Qntd_AduboFosfatado_kgha =  P2O5_kgha * 100 / col_Porc_Perda
-            Qntd_AduboFosfatado_kgha  = 100 * Qntd_AduboFosfatado_kgha / Preencher   
-            return Qntd_AduboFosfatado_kgha
-
-        def P2O5_kgHa(col_fosfatagemIdeal, P_meh1): 
-            P2O5_kgha = (col_fosfatagemIdeal - P_meh1) * 4.58 # multipilcar por 2 para transformar em P e depois por 2.29 para P205 kg/ha (4.58)
-            return P2O5_kgha
-        
-        with enh_Fosfatagem:
-            col1_fosfatagemIdeal, col2_Porc_Perda, col3_Preencher= st.columns(3)
-            with col1_fosfatagemIdeal:
-                col_fosfatagemIdeal = float(st.number_input('Nível ideal de fósforo',0.0, 50.0, (20.0)))
-
-            with col2_Porc_Perda:
-                col_Porc_Perda = float(st.number_input('Perda considerada (%)',0.0, 100.0, (20.0)))
-                            
-            with col3_Preencher:
-                Preencher = float(st.number_input('Recomendação no adubo a preencher (%)', 0.0, 100.0, (12.0)))
-
-            analiseTalhao_NC['P2O5 (kg/ha)'] = analiseTalhao_NC.apply(lambda row: P2O5_kgHa(col_fosfatagemIdeal, row['P meh-¹']), axis=1)
-            analiseTalhao_NC['P2O5 total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['P2O5 (kg/ha)'], row['areaTotal']), axis=1)
-            analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Qntd_AduboFosfatado(row['P2O5 (kg/ha)'], col_Porc_Perda, Preencher), axis=1)
-            analiseTalhao_NC['Qntd_AduboFosfatado_Total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Qntd_AduboFosfatado (kg/ha)'], row['areaTotal']), axis=1)            
-            
-
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 (kg/ha)', ascending=False)
-            figP2O5 = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 (kg/ha)'], name='P2O5 (kg/ha)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figP2O5.update_layout(
-                title = 'P2O5',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção (kg/ha)'
-            )
-
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 total', ascending=False)
-            figP2O5_total = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 total'], name='P2O5 total (kg)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figP2O5_total.update_layout(
-                title = 'P2O5',
-                xaxis_title='Talhão',
-                yaxis_title='Correção em área total (kg)'
-            )
-
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado (kg/ha)', ascending=False)
-            figAdubo_Fosfatado = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'], name='Adubo Fosfatado (kg/ha)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figAdubo_Fosfatado.update_layout(
-                title = 'Adubo Fosfatado',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção (kg/ha)'
-            )
+                
+                enh_Fosfatagem = st.expander("Determinação da Necessidade fosfatagem para os talhões", expanded=False)  
 
 
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado_Total', ascending=False)
-            figAdubo_Fosfatado_total = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado_Total'], name='Adubo Fosfatado área total (kg)')
-                    ])
+                def Qntd_AduboFosfatado(P2O5_kgha, col_Porc_Perda, Preencher): 
+                    Qntd_AduboFosfatado_kgha =  P2O5_kgha * 100 / col_Porc_Perda
+                    Qntd_AduboFosfatado_kgha  = 100 * Qntd_AduboFosfatado_kgha / Preencher   
+                    return Qntd_AduboFosfatado_kgha
 
-            # Atualizar os rótulos dos eixos
-            figAdubo_Fosfatado_total.update_layout(
-                title = 'Adubo Fosfatado',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção área total'
-            )
+                def P2O5_kgHa(col_fosfatagemIdeal, P_meh1): 
+                    P2O5_kgha = (col_fosfatagemIdeal - P_meh1) * 4.58 # multipilcar por 2 para transformar em P e depois por 2.29 para P205 kg/ha (4.58)
+                    return P2O5_kgha
+                
+                with enh_Fosfatagem:
+                    col1_fosfatagemIdeal, col2_Porc_Perda, col3_Preencher= st.columns(3)
+                    with col1_fosfatagemIdeal:
+                        col_fosfatagemIdeal = float(st.number_input('Nível ideal de fósforo',0.0, 50.0, (20.0)))
 
+                    with col2_Porc_Perda:
+                        col_Porc_Perda = float(st.number_input('Perda considerada (%)',0.0, 100.0, (20.0)))
+                                    
+                    with col3_Preencher:
+                        Preencher = float(st.number_input('Recomendação no adubo a preencher (%)', 0.0, 100.0, (12.0)))
 
-            #Criando colunas para colocar os gráficos
-            col_g1, col_g2 = st.columns(2)
+                    analiseTalhao_NC['P2O5 (kg/ha)'] = analiseTalhao_NC.apply(lambda row: P2O5_kgHa(col_fosfatagemIdeal, row['P meh-¹']), axis=1)
+                    analiseTalhao_NC['P2O5 total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['P2O5 (kg/ha)'], row['areaTotal']), axis=1)
+                    analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Qntd_AduboFosfatado(row['P2O5 (kg/ha)'], col_Porc_Perda, Preencher), axis=1)
+                    analiseTalhao_NC['Qntd_AduboFosfatado_Total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Qntd_AduboFosfatado (kg/ha)'], row['areaTotal']), axis=1)            
+                    
 
-            with col_g1:
-                st.plotly_chart(figP2O5)           
-                st.plotly_chart(figAdubo_Fosfatado)
-            with col_g2:
-                st.plotly_chart(figP2O5_total)
-                st.plotly_chart(figAdubo_Fosfatado_total)
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 (kg/ha)', ascending=False)
+                    figP2O5 = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 (kg/ha)'], name='P2O5 (kg/ha)')
+                            ])
 
-        enh_Potassagem = st.expander("Determinação da Necessidade potassagem para os talhões", expanded=False) 
+                    # Atualizar os rótulos dos eixos
+                    figP2O5.update_layout(
+                        title = 'P2O5',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção (kg/ha)'
+                    )
 
-        def Nc_RecomendadaK2O(k20_kg_ha, col_Potassagem_Preencher):
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='P2O5 total', ascending=False)
+                    figP2O5_total = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['P2O5 total'], name='P2O5 total (kg)')
+                            ])
 
-            return k20_kg_ha * 100 / col_Potassagem_Preencher
+                    # Atualizar os rótulos dos eixos
+                    figP2O5_total.update_layout(
+                        title = 'P2O5',
+                        xaxis_title='Talhão',
+                        yaxis_title='Correção em área total (kg)'
+                    )
 
-        def Nc_potassio(K, T):
-            K_CTC_ph7 = 100 * K / T
-            K_porc = 3 - K_CTC_ph7
-            k_cmol_dm3 = K_porc * T / 100
-            k_mg_dm3 = k_cmol_dm3 * 390
-            k_kg_ha = k_mg_dm3 * 2
-            k20_kg_ha = k_kg_ha * 1.205
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado (kg/ha)', ascending=False)
+                    figAdubo_Fosfatado = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado (kg/ha)'], name='Adubo Fosfatado (kg/ha)')
+                            ])
 
-            return k20_kg_ha
-        
-
-        
-        with enh_Potassagem:
-
-            col1_Potassagem, col2_Potassagem_Preencher = st.columns(2)
-            with col1_Potassagem:
-                col_Potassagem = float(st.number_input('Preço (R$/KG) ',0.0, 50.0, (20.0)))
-
-            with col2_Potassagem_Preencher:
-                col_Potassagem_Preencher = float(st.number_input('Recomendação no adubo a preencher (%) ',0.0, 100.0, (2.80)))
-
-            analiseTalhao_NC['K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_potassio(row['K'], row['T']), axis=1)
-            analiseTalhao_NC['Recomendação de K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_RecomendadaK2O(row['K2O (kg/ha)'], col_Potassagem_Preencher), axis=1)
-            analiseTalhao_NC['K2O total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['K2O (kg/ha)'], row['areaTotal']), axis=1)
-            analiseTalhao_NC['Recomendação area total (kg)'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Recomendação de K2O (kg/ha)'], row['areaTotal']), axis=1)
-            
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O (kg/ha)', ascending=False)
-            figK2O = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O (kg/ha)'], name='K2O (kg/ha)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figK2O.update_layout(
-                title = 'K2O',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção (kg/ha)'
-            )
-
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O total', ascending=False)
-            figK2O_total = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O total'], name='K2O total (kg)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figK2O_total.update_layout(
-                title = 'K2O',
-                xaxis_title='Talhão',
-                yaxis_title='Correção em área total (kg)'
-            )
-
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação de K2O (kg/ha)', ascending=False)
-            figAdubo_Potassio = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação de K2O (kg/ha)'], name='Recomendação de K2O (kg/ha)')
-                    ])
-
-            # Atualizar os rótulos dos eixos
-            figAdubo_Potassio.update_layout(
-                title = 'Recomendação de K2O (kg/ha)',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção (kg/ha)'
-            )
+                    # Atualizar os rótulos dos eixos
+                    figAdubo_Fosfatado.update_layout(
+                        title = 'Adubo Fosfatado',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção (kg/ha)'
+                    )
 
 
-            # Criar o gráfico de barras
-            analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação area total (kg)', ascending=False)
-            figAdubo_Potassio_total = go.Figure(data=[
-                    go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação area total (kg)'], name='Adubo k2o área total (kg)')
-                    ])
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Qntd_AduboFosfatado_Total', ascending=False)
+                    figAdubo_Fosfatado_total = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Qntd_AduboFosfatado_Total'], name='Adubo Fosfatado área total (kg)')
+                            ])
 
-            # Atualizar os rótulos dos eixos
-            figAdubo_Potassio_total.update_layout(
-                title = 'Adubo K20',
-                xaxis_title='Talhão',
-                yaxis_title='Necessidade de correção área total'
-            )
-
-
-            #Criando colunas para colocar os gráficos
-            col_g1, col_g2 = st.columns(2)
-
-            with col_g1:
-                st.plotly_chart(figK2O)           
-                st.plotly_chart(figAdubo_Potassio)
-            with col_g2:
-                st.plotly_chart(figK2O_total)
-                st.plotly_chart(figAdubo_Potassio_total)
-            
-        enh_Calculos = st.expander("Exibir tabela com os valores de adubação por talhão", expanded=False)
-        with enh_Calculos:
-            st.write(analiseTalhao_NC)    
+                    # Atualizar os rótulos dos eixos
+                    figAdubo_Fosfatado_total.update_layout(
+                        title = 'Adubo Fosfatado',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção área total'
+                    )
 
 
+                    #Criando colunas para colocar os gráficos
+                    col_g1, col_g2 = st.columns(2)
+
+                    with col_g1:
+                        st.plotly_chart(figP2O5)           
+                        st.plotly_chart(figAdubo_Fosfatado)
+                    with col_g2:
+                        st.plotly_chart(figP2O5_total)
+                        st.plotly_chart(figAdubo_Fosfatado_total)
+
+                enh_Potassagem = st.expander("Determinação da Necessidade potassagem para os talhões", expanded=False) 
+
+                def Nc_RecomendadaK2O(k20_kg_ha, col_Potassagem_Preencher):
+
+                    return k20_kg_ha * 100 / col_Potassagem_Preencher
+
+                def Nc_potassio(K, T):
+                    K_CTC_ph7 = 100 * K / T
+                    K_porc = 3 - K_CTC_ph7
+                    k_cmol_dm3 = K_porc * T / 100
+                    k_mg_dm3 = k_cmol_dm3 * 390
+                    k_kg_ha = k_mg_dm3 * 2
+                    k20_kg_ha = k_kg_ha * 1.205
+
+                    return k20_kg_ha
+                
+
+                
+                with enh_Potassagem:
+
+                    col1_Potassagem, col2_Potassagem_Preencher = st.columns(2)
+                    with col1_Potassagem:
+                        col_Potassagem = float(st.number_input('Preço (R$/KG) ',0.0, 50.0, (20.0)))
+
+                    with col2_Potassagem_Preencher:
+                        col_Potassagem_Preencher = float(st.number_input('Recomendação no adubo a preencher (%) ',0.0, 100.0, (2.80)))
+
+                    analiseTalhao_NC['K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_potassio(row['K'], row['T']), axis=1)
+                    analiseTalhao_NC['Recomendação de K2O (kg/ha)'] = analiseTalhao_NC.apply(lambda row: Nc_RecomendadaK2O(row['K2O (kg/ha)'], col_Potassagem_Preencher), axis=1)
+                    analiseTalhao_NC['K2O total'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['K2O (kg/ha)'], row['areaTotal']), axis=1)
+                    analiseTalhao_NC['Recomendação area total (kg)'] = analiseTalhao_NC.apply(lambda row: NC_areaTotal(row['Recomendação de K2O (kg/ha)'], row['areaTotal']), axis=1)
+                    
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O (kg/ha)', ascending=False)
+                    figK2O = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O (kg/ha)'], name='K2O (kg/ha)')
+                            ])
+
+                    # Atualizar os rótulos dos eixos
+                    figK2O.update_layout(
+                        title = 'K2O',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção (kg/ha)'
+                    )
+
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='K2O total', ascending=False)
+                    figK2O_total = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['K2O total'], name='K2O total (kg)')
+                            ])
+
+                    # Atualizar os rótulos dos eixos
+                    figK2O_total.update_layout(
+                        title = 'K2O',
+                        xaxis_title='Talhão',
+                        yaxis_title='Correção em área total (kg)'
+                    )
+
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação de K2O (kg/ha)', ascending=False)
+                    figAdubo_Potassio = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação de K2O (kg/ha)'], name='Recomendação de K2O (kg/ha)')
+                            ])
+
+                    # Atualizar os rótulos dos eixos
+                    figAdubo_Potassio.update_layout(
+                        title = 'Recomendação de K2O (kg/ha)',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção (kg/ha)'
+                    )
+
+
+                    # Criar o gráfico de barras
+                    analiseTalhao_NC = analiseTalhao_NC.sort_values(by='Recomendação area total (kg)', ascending=False)
+                    figAdubo_Potassio_total = go.Figure(data=[
+                            go.Bar(x=analiseTalhao_NC['Talhao'], y=analiseTalhao_NC['Recomendação area total (kg)'], name='Adubo k2o área total (kg)')
+                            ])
+
+                    # Atualizar os rótulos dos eixos
+                    figAdubo_Potassio_total.update_layout(
+                        title = 'Adubo K20',
+                        xaxis_title='Talhão',
+                        yaxis_title='Necessidade de correção área total'
+                    )
+
+
+                    #Criando colunas para colocar os gráficos
+                    col_g1, col_g2 = st.columns(2)
+
+                    with col_g1:
+                        st.plotly_chart(figK2O)           
+                        st.plotly_chart(figAdubo_Potassio)
+                    with col_g2:
+                        st.plotly_chart(figK2O_total)
+                        st.plotly_chart(figAdubo_Potassio_total)
+                    
+                enh_Calculos = st.expander("Exibir tabela com os valores de adubação por talhão", expanded=False)
+                with enh_Calculos:
+                    st.write(analiseTalhao_NC)    
+
+        else:
+            st.warning("Por favor, faça o upload de um arquivo Excel.")
+
+#fim do teste de importação
             
 
     elif Uso == 'Formigueiros':
 
-        
         import streamlit as st
         import pandas as pd
         import requests
         from io import StringIO
         from streamlit_folium import folium_static
-        
+        import folium
+        import folium.plugins as plugins  # Importando os plugins
+
+        # Obter os dados da planilha do Google Sheets
         URL = "https://docs.google.com/spreadsheets/d/1RMc28dzaQBwCBCHjHGDQhmvzqp0SAiS2fIameQXC89A/gviz/tq?tqx=out:csv&sheet=Formiga_Cad"
-        # Obter os dados da planilha
         response = requests.get(URL)
         data = response.content.decode('utf-8')
         df_formiga = pd.read_csv(StringIO(data))
 
         # Criar um mapa base
-        m = folium.Map(location=[-13.331891, -39.311357,], zoom_start=16)    
-        
+        m = folium.Map(location=[-13.331891, -39.311357], zoom_start=16)
+
+        df_sucupira = gpd.read_file("geojson.json")
+
+        # Converte o GeoDataFrame para formato suportado pelo Folium
+        df_sucupira_data = df_sucupira.to_crs(epsg="4326").to_json()
+
+
+        # Função de estilo com alfa 0
+        def style_function(feature):
+            return {
+                'fillOpacity': 0,  # Alfa de 0
+                'weight': 3,
+                'color': 'blue'
+            }
+        # Adiciona a camada GeoJSON ao mapa
+        folium.GeoJson(df_sucupira_data, style_function=style_function).add_to(m)
+
         # Dicionário com os mapas base personalizados
         basemaps = {
             'Google Maps': folium.TileLayer(
@@ -2541,24 +2576,173 @@ if page == 'Sucupira Agroflorestas':
         color_dict = {
             'Saúvas': 'blue',
             'Quenquéns': 'red',
-            # Adicione outros tipos de formiga e cores conforme necessário
         }
 
+        # Adicionar checkbox no Streamlit para mapa de calor e marcadores
+        show_heatmap = st.checkbox('Mostrar Mapa de Calor')
+        show_markers = st.checkbox('Mostrar Marcadores')
+
         # Adicionar marcadores para cada ponto
+        heat_data = []  # Dados para o mapa de calor
         for index, row in df_formiga.iterrows():
             lat, long = row['LatLong'].split(',')
-            color = color_dict.get(row['TipoFormiga'], 'green')  # 'green' é a cor padrão se o tipo de formiga não estiver no dicionário
-            folium.Marker(
-                location=[float(lat), float(long)],
-                icon=folium.Icon(color=color),
-                popup=row['TipoFormiga']  # Adiciona um popup com o tipo de formiga
-            ).add_to(m)
+            lat, long = float(lat), float(long)
+            color = color_dict.get(row['TipoFormiga'], 'green')  # 'green' é a cor padrão
+
+            if show_markers:
+                folium.Marker(
+                    location=[lat, long],
+                    icon=folium.Icon(color=color),
+                    popup=row['TipoFormiga']
+                ).add_to(m)
+
+            heat_data.append([lat, long])  # Adicionando coordenadas à lista de dados para o mapa de calor
+
+        # Se o checkbox do mapa de calor estiver marcado, adicione o mapa de calor
+        if show_heatmap:
+            plugins.HeatMap(heat_data).add_to(m)
 
         # Mostrar o mapa no Streamlit
         folium_static(m, height=900, width=900)
         
-        # Exibir os dados no Streamlit
-        #st.write(df_formiga)
+
+
+    elif Uso == 'Imagens':
+
+        st.write("Em desenvolvimento")
+
+        # # Fiz esse comentário para trabalhar os dados depois
+        # import streamlit as st
+        # import requests
+        # from PIL import Image
+        # import pandas as pd
+        # from io import StringIO
+        # # Configurações iniciais para acessar o drive
+        # import json
+        # from google.oauth2.service_account import Credentials
+        # from googleapiclient.discovery import build
+        # from googleapiclient.http import MediaIoBaseDownload
+        # import io
+        # from PIL import Image
+        # import streamlit as st
+        # from io import BytesIO
+        # import numpy as np
+        # from PIL.ExifTags import TAGS, GPSTAGS  # Importação adicional
+        # from streamlit_folium import folium_static
+
+        # # Função para converter DMS para decimal
+        # def dms_to_decimal(degrees, minutes, seconds, ref):
+        #     decimal = float(degrees) + float(minutes)/60 + float(seconds)/(60*60)
+        #     if ref in ['S', 'W']:
+        #         decimal = -decimal
+        #     return decimal
+
+        # # Função para extrair informações de geolocalização (adicionada)
+        # def get_geotagging(exif):
+        #     if not exif:
+        #         raise ValueError("Sem metadados EXIF")
+        #     geotagging = {}
+        #     for (idx, tag) in TAGS.items():
+        #         if tag == 'GPSInfo':
+        #             if idx not in exif:
+        #                 raise ValueError("Sem dados EXIF de geolocalização existentes")
+        #             for (key, val) in GPSTAGS.items():
+        #                 if key in exif[idx]:
+        #                     geotagging[val] = exif[idx][key]
+        #     return geotagging
+
+        # # Ler o arquivo JSON
+        # with open("chaves/ee-jeferson-2-86ccf5737e11.json", "r") as f:
+        #     credentials_json = json.load(f)
+
+        # # Criar credenciais
+        # credentials = Credentials.from_service_account_info(credentials_json, scopes=["https://www.googleapis.com/auth/drive"])
+
+
+        # # Construir o serviço do Google Drive
+        # drive_service = build('drive', 'v3', credentials=credentials)
+
+        # # ID da pasta
+        # folder_id = '1-w9k2eSpnv5v2S-uNSDO6vGqoAjC6dDB'
+
+        # # Obter lista de arquivos na pasta
+        # results = drive_service.files().list(
+        #     q=f"'{folder_id}' in parents",
+        #     fields="files(id, name)"
+        # ).execute()
+        # items = results.get('files', [])
+
+        # # Inicializa o mapa
+        # mapa_foto = folium.Map(location=[-20.7194, -41.4997], zoom_start=8)
+
+        # # Dicionário com os mapas base personalizados
+        # basemaps = {
+        #     'Google Maps': folium.TileLayer(
+        #         tiles='https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+        #         attr='Google',
+        #         name='Google Maps',
+        #         overlay=True,
+        #         control=True
+        #     ),
+        #     'Google Satellite Hybrid': folium.TileLayer(
+        #         tiles='https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+        #         attr='Google',
+        #         name='Google Satellite',
+        #         overlay=True,
+        #         control=True
+        #     )
+        # }
+
+        # # Adiciona os mapas base personalizados ao mapa
+        # basemaps['Google Maps'].add_to(mapa_foto)
+        # basemaps['Google Satellite Hybrid'].add_to(mapa_foto)
+
+        # # Para cada arquivo na pasta
+        # for item in items:
+        #     # Informações do arquivo
+        #     file_id = item['id']
+        #     file_name = item['name']
+
+        #     # Solicitação para baixar o arquivo
+        #     request = drive_service.files().get_media(fileId=file_id)
+        #     fh = io.BytesIO()
+        #     downloader = MediaIoBaseDownload(fh, request)
+        #     done = False
+        #     while done is False:
+        #         status, done = downloader.next_chunk()
+            
+        #     # Mover o ponteiro para o início do arquivo BytesIO
+        #     fh.seek(0)
+
+        #     # Tentar abrir a imagem com PIL
+        #     try:
+        #         img = Image.open(fh)
+        #         exif_data = img._getexif()
+
+        #         if exif_data is not None:
+        #             geotagging = get_geotagging(exif_data)
+
+        #         # Converter coordenadas para formato decimal
+        #         latitude = dms_to_decimal(*geotagging['GPSLatitude'], geotagging['GPSLatitudeRef'])
+        #         longitude = dms_to_decimal(*geotagging['GPSLongitude'], geotagging['GPSLongitudeRef'])
+
+        #         # Converter a imagem PIL para base64
+        #         buffered = BytesIO()
+        #         img.save(buffered, format='JPEG')
+        #         img_str = base64.b64encode(buffered.getvalue()).decode()
+
+        #         # Criar popup com a imagem
+        #         html = f'<img src="data:image/jpeg;base64,{img_str}" width=500>'
+        #         popup = folium.Popup(html)
+
+        #         # Adicionar marcador ao mapa
+        #         folium.Marker([latitude, longitude], popup=popup).add_to(mapa_foto)
+                
+        #     except Exception as e:
+        #         st.write(f"Não foi possível abrir o arquivo {file_name}: {e}")
+
+        # # Mostrar o mapa com os marcadores e imagens no popup
+        # folium_static(mapa_foto, height=900, width=900)
 
     else:
         pass
