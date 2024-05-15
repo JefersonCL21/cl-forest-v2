@@ -14,7 +14,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Exponha a porta que o Streamlit usará
-EXPOSE 8501
+EXPOSE 8080
 
 # Defina o ponto de entrada para o contêiner iniciar o aplicativo Streamlit
-ENTRYPOINT ["streamlit", "run", "1_🏠Inicio.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "1_🏠Inicio.py", "--server.port=8080", "--server.address=0.0.0.0"]
