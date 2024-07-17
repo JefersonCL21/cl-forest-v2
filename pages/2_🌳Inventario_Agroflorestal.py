@@ -1130,6 +1130,7 @@ if page == 'Sucupira Agroflorestas':
                 anoInventario = 2023
                 horizonte = seed - 2022
                 Talhao = []
+                QuantidadeIndividuos = []
 
                 for h in range(horizonte):
                     for i, row in plantios_df1.iterrows():

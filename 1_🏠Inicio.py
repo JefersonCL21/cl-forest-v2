@@ -16,7 +16,7 @@ from streamlit_metrics import metric, metric_row
 from PIL import Image
 import seaborn as sns
 from math import floor
-import adicionarLogo  
+import adicionarLogo    
 import adicionarPlanoFundoSideBar
 
 
@@ -27,7 +27,7 @@ st.set_page_config(
     layout="wide",
 )
 
-#adicionar a logo da empresa
+#adicionar a logo da empresa 
 
 adicionarLogo.add_logo()
 
