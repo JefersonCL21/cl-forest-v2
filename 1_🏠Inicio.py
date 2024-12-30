@@ -40,7 +40,7 @@ st.sidebar.title("Análise de dados")
 st.sidebar.markdown("Essa aplicação fornece uma análise para os dados de inventário agroflorestal")
 
 #image = Image.open('FotoSucupira.JPG')   
-#st.image(image, use_column_width=True)
+#st.image(image, use_column_width=True)       
 
 
 def inicialPage():
