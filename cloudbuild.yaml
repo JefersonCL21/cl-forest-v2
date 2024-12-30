@@ -1,0 +1,14 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app']
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: ['run', 'deploy', 'streamlit-app',
+           '--image', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app',
+           '--platform', 'managed',
+           '--region', 'southamerica-east1',
+           '--allow-unauthenticated']
+
+timeout: 1200s
