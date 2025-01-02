@@ -1,17 +1,50 @@
 steps:
+  # 1. Fazer o build da imagem Docker
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app', '.']
+    args:
+      [
+        'build',
+        '-t',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA',
+        '.'
+      ]
+
+  # 2. Fazer o push da imagem para o Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app']
+    args:
+      [
+        'push',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA'
+      ]
+
+  # 3. Fazer o deploy no Cloud Run sem direcionar tráfego automaticamente
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args: ['run', 'deploy', 'streamlit-app',
-           '--image', 'southamerica-east1-docker.pkg.dev/cl-experimentation/streamlit-repo/streamlit-app',
-           '--platform', 'managed',
-           '--region', 'southamerica-east1',
-           '--allow-unauthenticated']
+    entrypoint: 'gcloud'
+    args:
+      [
+        'run',
+        'deploy',
+        'meu-app-streamlit', # Nome do serviço no Cloud Run
+        '--image',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA',
+        '--region',
+        'us-central1',
+        '--platform',
+        'managed',
+        '--no-traffic',         # Não redirecionar tráfego automaticamente
+        '--allow-unauthenticated',
+        '--memory',
+        '2Gi',                  # Configurar 2 GB de memória
+        '--cpu',
+        '2',                    # Configurar 2 CPUs
+        '--tag',
+        'test'                  # Adicionar uma tag de revisão 'test'
+      ]
 
-timeout: 1200s
+# Registrar a imagem gerada
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA'
 
+# Configurar logs apenas para o Cloud Logging
 options:
   logging: CLOUD_LOGGING_ONLY
