@@ -17,7 +17,7 @@ steps:
         'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA'
       ]
 
-  # 3. Fazer o deploy no Cloud Run sem direcionar tráfego automaticamente
+  # 3. Fazer o deploy no Cloud Run (sem `--no-traffic` no primeiro deploy)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
@@ -31,14 +31,11 @@ steps:
         'us-central1',
         '--platform',
         'managed',
-        '--no-traffic',         # Não redirecionar tráfego automaticamente
         '--allow-unauthenticated',
         '--memory',
         '2Gi',                  # Configurar 2 GB de memória
         '--cpu',
         '2',                    # Configurar 2 CPUs
-        '--tag',
-        'test'                  # Adicionar uma tag de revisão 'test'
       ]
 
 # Registrar a imagem gerada
