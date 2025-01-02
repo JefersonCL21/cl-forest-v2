@@ -93,14 +93,14 @@ hide_st_style = """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
 #importar dados do excel de inventário
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def carregarDados():    
     df = pd.read_csv("dados/GERAL_V2.csv")  
 
     return df 
 df = carregarDados()
 
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def carregarDados_DAP_HT():    
     df = pd.read_csv("dados/CRESCIMENTO_DAP_HT.csv")  
 
@@ -167,7 +167,7 @@ if page == 'Sucupira Agroflorestas':
 
             res_dados = res_dados.reset_index()
             st.write(res_dados[['Popular', 'Especie', 'n']])
-            @st.cache
+            @st.cache_data
             def convert_df(df):
                 # IMPORTANT: Cache the conversion to prevent computation on every rerun
                 return df.to_csv().encode('utf-8')
@@ -886,7 +886,7 @@ if page == 'Sucupira Agroflorestas':
 
                     st.plotly_chart(fig4, use_container_width=True)
 
-                    @st.cache
+                    @st.cache_data
                     def convert_df(df):
                         # IMPORTANT: Cache the conversion to prevent computation on every rerun
                         return df.to_csv().encode('utf-8')
@@ -909,7 +909,7 @@ if page == 'Sucupira Agroflorestas':
 
                 if sucupira_tab:
 
-                    @st.cache(allow_output_mutation=True)
+                    @st.cache_data
                     def carregarDados1():    
                         df = pd.read_csv("dados/dadosReceitaMadeira.csv")  
 
@@ -1206,7 +1206,7 @@ if page == 'Sucupira Agroflorestas':
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
                 st.write(resultado_exibir_acai)
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -1381,7 +1381,7 @@ if page == 'Sucupira Agroflorestas':
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
                 st.write(resultado_exibir_cacau)
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -1557,7 +1557,7 @@ if page == 'Sucupira Agroflorestas':
             dados_expander = st.expander("Exibir dados por talhão", expanded=False)
             with dados_expander:
                 st.write(resultado_exibir_cup)
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -1691,7 +1691,7 @@ if page == 'Sucupira Agroflorestas':
             with dados_expander:
                 st.write(resultado_exibir_juc)
                 #st.dataframe(resultado_resultado_exibir)
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -1796,7 +1796,7 @@ if page == 'Sucupira Agroflorestas':
 
                 st.write('Baixar os dados organizados')
 
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -1956,7 +1956,7 @@ if page == 'Sucupira Agroflorestas':
         with col2:
             st.write(df_novo)
 
-        @st.cache
+        @st.cache_data
         def convert_df(df):
             # IMPORTANT: Cache the conversion to prevent computation on every rerun
             return df.to_csv().encode('utf-8')
@@ -1974,7 +1974,7 @@ if page == 'Sucupira Agroflorestas':
 
 
 #teste de importação
-        @st.cache(allow_output_mutation=True)
+        @st.cache_data
         def carregarDadosAnaliseSolo(uploaded_file, sheet_name):
             if uploaded_file is not None:
                 df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
@@ -2946,7 +2946,7 @@ elif page == 'Regenera':
 
             # Carregar o Excel em um DataFrame
             #importar dados do excel de inventário
-            @st.cache(allow_output_mutation=True)
+            @st.cache_data
             def carregarDadosRegenera():    
                 df = pd.read_csv("dados/dadosRegenera.csv")  
 
@@ -3234,7 +3234,7 @@ elif page == 'Regenera':
 
         st.write('Sistema para análise de solos')
 
-        @st.cache(allow_output_mutation=True)
+        @st.cache_data
         def carregarDadosAnaliseSolo(dados):    
             df = pd.read_excel("dados/solos.xlsx", sheet_name=dados)  
             return df 

@@ -19,10 +19,7 @@ def carregarDados():
 '''
 
 
-
-
-
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def carregarDadosSHP():
     polygon = gpd.read_file("dados/Talhoes_editado10.shp")
     return polygon  
