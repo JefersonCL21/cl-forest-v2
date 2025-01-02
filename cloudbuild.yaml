@@ -1,11 +1,9 @@
 steps:
-  # 1. Fazer o build da imagem Docker e aplicar a tag "test"
+  # 1. Fazer o build da imagem Docker
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'build',
-        '-t',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test',
         '-t',
         'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
         '.' # Caminho do Dockerfile
@@ -16,36 +14,32 @@ steps:
     args:
       [
         'push',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test',
-        'push',
         'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
       ]
 
-  # 3. Fazer o deploy da versão "test" no Cloud Run (sem tráfego)
+  # 3. Fazer o deploy no Cloud Run (sem `--no-traffic` no primeiro deploy)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
       [
         'run',
         'deploy',
-        'cl-biometrics', # Nome do serviço no Cloud Run
+        'cl-biometrics', # Novo nome do serviço no Cloud Run
         '--image',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
         '--region',
         'us-central1',
         '--platform',
         'managed',
-        '--no-traffic',          # Não passar tráfego automaticamente
         '--allow-unauthenticated',
         '--memory',
-        '2Gi',                   # Configurar 2 GB de memória
+        '2Gi', # Configurar 2 GB de memória
         '--cpu',
-        '2'                      # Configurar 2 CPUs
+        '1',  # Configurar 2 CPUs
       ]
 
 # Registrar a imagem gerada
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test'
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
 
 # Configurar logs apenas para o Cloud Logging
