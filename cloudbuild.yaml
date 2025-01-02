@@ -1,50 +1,63 @@
+# Substituições dinâmicas para tornar o build mais reutilizável
+substitutions:
+  _SERVICE_NAME: cl-biometrics
+  _AR_HOSTNAME: us-central1-docker.pkg.dev
+  _DEPLOY_REGION: us-central1
+
 steps:
   # 1. Fazer build da imagem Docker
   - name: 'gcr.io/cloud-builders/docker'
+    id: Build
     args:
       [
         'build',
+        '--no-cache', # Adicionado para garantir um build "limpo"
         '-t',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
-        '.'
+        '$_AR_HOSTNAME/$PROJECT_ID/meu-repo/$_SERVICE_NAME:$SHORT_SHA',
+        '.' # Diretório do Dockerfile
       ]
 
   # 2. Enviar a imagem para o Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
+    id: Push
     args:
       [
         'push',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
+        '$_AR_HOSTNAME/$PROJECT_ID/meu-repo/$_SERVICE_NAME:$SHORT_SHA'
       ]
 
-  # 3. Fazer o deploy no Cloud Run com tag 'test' e sem passar tráfego
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  # 3. Fazer o deploy no Cloud Run com a tag 'test' e sem passar tráfego
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Deploy
     entrypoint: 'gcloud'
     args:
       [
         'run',
         'deploy',
-        'cl-biometrics',
+        '$_SERVICE_NAME',
         '--image',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
+        '$_AR_HOSTNAME/$PROJECT_ID/meu-repo/$_SERVICE_NAME:$SHORT_SHA',
         '--region',
-        'us-central1',
+        '$_DEPLOY_REGION',
         '--platform',
         'managed',
         '--no-traffic',  # Não direcionar tráfego automaticamente
-        '--tag',
-        'test',           # Tag para identificar como revisão de teste
+        '--tag=test',    # Tag para identificar como revisão de teste
         '--allow-unauthenticated',
-        '--memory',
-        '2Gi',            # Configurar 2 GB de memória
-        '--cpu',
-        '2'               # Configurar 2 CPUs
+        '--memory=2Gi',  # Configurar 2 GB de memória
+        '--cpu=2'        # Configurar 2 CPUs
       ]
 
-# Registrar a imagem gerada
+# Registrar a imagem gerada no Artifact Registry
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
+  - '$_AR_HOSTNAME/$PROJECT_ID/meu-repo/$_SERVICE_NAME:$SHORT_SHA'
 
-# Configurar logs apenas para o Cloud Logging
+# Configurações adicionais para logging e substituições flexíveis
 options:
+  substitutionOption: ALLOW_LOOSE
   logging: CLOUD_LOGGING_ONLY
+
+# Adicionando tags para rastreamento e categorização do build
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - $_SERVICE_NAME
