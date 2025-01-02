@@ -99,7 +99,7 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 
 
 #importar dados do excel de inventário
-@st.cache(allow_output_mutation=True)
+@st.cache_data
 def carregarDados():    
     df = pd.read_csv("dados/GERAL_V2.csv")
     
@@ -438,7 +438,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
 
     enh_parametros = st.expander("Exportar os parametros dos modelos ajustados para estimar altura total de árvores em agroflorestas", expanded=False)
     with enh_parametros:
-        @st.cache
+        @st.cache_data
         def convert_df(df):
             # IMPORTANT: Cache the conversion to prevent computation on every rerun
             return df.to_csv().encode('utf-8')
@@ -480,7 +480,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
             
             file = st.file_uploader("Importar dados", type=["xlsx"])
             if file is not None:
-                @st.cache(allow_output_mutation=True)
+                @st.cache_data
                 def load_data():
                     df = pd.read_excel(file)
                     return df  
@@ -547,7 +547,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                     unsafe_allow_html=True
                 )
                 st.write('Baixar os dados')
-                @st.cache
+                @st.cache_data
                 def convert_df(df):
                     # IMPORTANT: Cache the conversion to prevent computation on every rerun
                     return df.to_csv().encode('utf-8')
@@ -589,7 +589,7 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
             st.title("Modelos alométricos para estimar altura")
             file = st.file_uploader("Upload database", type=["xlsx"])
             if file is not None:
-                @st.cache(allow_output_mutation=True)
+                @st.cache_data
                 def load_data():
                     df = pd.read_excel(file)
                     return df  
@@ -720,7 +720,7 @@ elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
     if selectbox == "Volumétricos":
         file = st.file_uploader("Importar dados de cubagem rigorosa", type=["xlsx"])
         if file is not None:
-            @st.cache(allow_output_mutation=True)
+            @st.cache_data
             def load_data():
                 df = pd.read_excel(file, sheet_name = None, header= None)
                 return df  
@@ -848,7 +848,7 @@ elif modelos == 'Ajustar modelos' and selectbox == "Volumétricos":
 
             st.write('Baixar os dados organizados')
 
-            @st.cache
+            @st.cache_data
             def convert_df(df):
                 # IMPORTANT: Cache the conversion to prevent computation on every rerun
                 return df.to_csv().encode('utf-8')
