@@ -5,8 +5,8 @@ steps:
       [
         'build',
         '-t',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA',
-        '.'
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
+        '.' # Caminho do Dockerfile
       ]
 
   # 2. Fazer o push da imagem para o Artifact Registry
@@ -14,7 +14,7 @@ steps:
     args:
       [
         'push',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA'
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
       ]
 
   # 3. Fazer o deploy no Cloud Run (sem `--no-traffic` no primeiro deploy)
@@ -24,23 +24,23 @@ steps:
       [
         'run',
         'deploy',
-        'meu-app-streamlit', # Nome do serviço no Cloud Run
+        'cl-biometrics', # Novo nome do serviço no Cloud Run
         '--image',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
         '--region',
         'us-central1',
         '--platform',
         'managed',
         '--allow-unauthenticated',
         '--memory',
-        '2Gi',                  # Configurar 2 GB de memória
+        '2Gi', # Configurar 2 GB de memória
         '--cpu',
-        '2',                    # Configurar 2 CPUs
+        '1',  # Configurar 2 CPUs
       ]
 
 # Registrar a imagem gerada
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/meu-app-streamlit:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
 
 # Configurar logs apenas para o Cloud Logging
 options:
