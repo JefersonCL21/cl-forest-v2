@@ -1,6 +1,3 @@
-import threading
-from fastapi import FastAPI
-import uvicorn
 import os
 import streamlit as st
 from streamlit_option_menu import option_menu
@@ -63,23 +60,3 @@ hide_st_style = """
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
-
-
-# === SERVIDOR FASTAPI PARA HEALTH CHECK ===
-
-# Criar servidor FastAPI
-app = FastAPI()
-
-@app.get("/healthz")
-async def health_check():
-    """Rota de health check"""
-    return {"status": "ok"}
-
-def run_health_server():
-    """Função para rodar o FastAPI em paralelo ao Streamlit"""
-    port = int(os.getenv("HEALTH_PORT", 8000))  # Porta padrão para o health check
-    uvicorn.run(app, host="0.0.0.0", port=port)
-
-# Rodar FastAPI em uma thread separada
-thread = threading.Thread(target=run_health_server, daemon=True)
-thread.start()

@@ -18,11 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar o restante dos arquivos para o container
 COPY . .
 
-# Expor portas para Streamlit (8080) e FastAPI (8000)
-EXPOSE 8080 8000
+# Expor a porta padrão do Streamlit
+EXPOSE 8080
 
-# Definir a porta padrão para o Streamlit no Cloud Run
-ENV PORT 8080
-
-# Comando para iniciar o Streamlit e o FastAPI
+# Comando para rodar o Streamlit
 CMD ["sh", "-c", "streamlit run 1_🏠Inicio.py --server.port=${PORT:-8080} --server.address=0.0.0.0"]
