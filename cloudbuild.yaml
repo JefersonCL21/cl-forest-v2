@@ -1,46 +1,52 @@
 steps:
-  # 1. Fazer o build da imagem Docker
+  # 1. Fazer o build da imagem Docker com as tags "test" e SHA
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'build',
         '-t',
         'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
+        '-t',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test',
         '.' # Caminho do Dockerfile
       ]
 
-  # 2. Fazer o push da imagem para o Artifact Registry
+  # 2. Fazer o push das imagens para o Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'push',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
+        'push',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test'
       ]
 
-  # 3. Fazer o deploy no Cloud Run (sem `--no-traffic` no primeiro deploy)
+  # 3. Fazer o deploy da imagem "test" no Cloud Run (sem tráfego automático)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args:
       [
         'run',
         'deploy',
-        'cl-biometrics', # Novo nome do serviço no Cloud Run
+        'cl-biometrics', # Nome do serviço no Cloud Run
         '--image',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test',
         '--region',
         'us-central1',
         '--platform',
         'managed',
+        '--no-traffic',          # Não passar tráfego automaticamente
         '--allow-unauthenticated',
         '--memory',
-        '2Gi', # Configurar 2 GB de memória
+        '2Gi',                   # Configurar 2 GB de memória
         '--cpu',
-        '1',  # Configurar 2 CPUs
+        '2',                     # Configurar 2 CPUs
       ]
 
-# Registrar a imagem gerada
+# Registrar as imagens geradas
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/meu-repo/cl-biometrics:test'
 
 # Configurar logs apenas para o Cloud Logging
 options:
