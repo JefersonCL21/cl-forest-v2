@@ -40,7 +40,7 @@ steps:
         '--memory',
         '2Gi',                   # Configurar 2 GB de memória
         '--cpu',
-        '2',                     # Configurar 2 CPUs
+        '1',                     # Configurar 2 CPUs
       ]
 
 # Registrar as imagens geradas
