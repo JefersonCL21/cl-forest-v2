@@ -2512,6 +2512,57 @@ if page == 'Sucupira Agroflorestas':
 
         else:
             st.warning("Por favor, faça o upload de um arquivo Excel.")
+            with st.expander("Instruções sobre as unidades dos elementos químicos e exemplo de planilha para importação."):
+                st.write("""
+                **Atenção:** Para garantir que a análise de solo seja realizada corretamente, as unidades dos elementos devem seguir o padrão abaixo:
+
+                | Elemento | Unidade         |
+                |----------|-----------------|
+                | PH       | pH (-)          |
+                | P meh-¹  | P meh-¹ (mg/dm³)|
+                | S        | S (mg/dm³)      |
+                | K        | K (cmolc/dm³)   |
+                | Ca       | Ca (cmolc/dm³)  |
+                | Mg       | Mg (cmolc/dm³)  |
+                | MO       | MO (dag/kg ou %)|
+                | B        | B (mg/dm³)      |
+                | Cu       | Cu (mg/dm³)     |
+                | Fe       | Fe (mg/dm³)     |
+                | Zn       | Zn (mg/dm³)     |
+                | Mn       | Mn (mg/dm³)     |
+                | T        | T (cmolc/dm³)   |
+                | Va       | V (%)           |
+                | mt       | m (%)           |
+
+                **Observação:** Certifique-se de que os dados na planilha sigam essas unidades para que a análise seja precisa.
+                """)
+                # Função para carregar a planilha
+                @st.cache_data
+                def carregar_planilha_solos():
+                    # Caminho da planilha (mesmo caminho que você forneceu)
+                    caminho_planilha = r"dados/solos.xlsx"
+                    
+                    # Ler a planilha em modo binário
+                    try:
+                        with open(caminho_planilha, "rb") as file:
+                            planilha_bytes = file.read()
+                        return planilha_bytes
+                    except FileNotFoundError:
+                        st.error("Arquivo não encontrado. Verifique o caminho da planilha.")
+                        return None
+
+                # Carregar a planilha
+                planilha_bytes = carregar_planilha_solos()
+
+                # Se a planilha foi carregada com sucesso, disponibilizar para download
+                if planilha_bytes:
+                    st.download_button(
+                        label="Baixar Planilha Modelo (solos.xlsx)",
+                        data=planilha_bytes,
+                        file_name="solos.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    st.success("Planilha disponível para download. Utilize o modelo para preencher os dados de análise de solo.")
 
 #fim do teste de importação
             
