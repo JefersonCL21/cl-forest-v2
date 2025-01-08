@@ -590,10 +590,10 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
             file = st.file_uploader("Upload database", type=["xlsx"])
             if file is not None:
                 @st.cache_data
-                def load_data():
+                def load_data_externo():
                     df = pd.read_excel(file)
                     return df  
-                df = load_data()
+                df = load_data_externo()
                 independent_var = st.sidebar.selectbox('Independent variable',list(df.columns))
                 dependent_var = st.sidebar.selectbox('Dependent variable',list(df.columns))
                 x = df[independent_var]
