@@ -587,13 +587,19 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                 return y
 
             st.title("Modelos alométricos para estimar altura")
+            @st.cache_data
+            def load_data_externo(file):
+                df = pd.read_excel(file)
+                return df
+
+            # Upload do arquivo
             file = st.file_uploader("Upload database", type=["xlsx"])
+
+            # Verifica se um arquivo foi carregado
             if file is not None:
-                @st.cache_data
-                def load_data_externo():
-                    df = pd.read_excel(file)
-                    return df  
-                df = load_data_externo()
+                # Carrega os dados do arquivo
+                df = load_data_externo(file)
+
                 independent_var = st.sidebar.selectbox('Independent variable',list(df.columns))
                 dependent_var = st.sidebar.selectbox('Dependent variable',list(df.columns))
                 x = df[independent_var]
