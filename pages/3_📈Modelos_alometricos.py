@@ -31,6 +31,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import io
+import xlsxwriter
 
 st.set_page_config(
     page_title="CL Forest Biometrics",
@@ -607,10 +608,10 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                 if categorica_col != " ":
                     categorica_var = st.sidebar.selectbox('Categorical variable (opcional)', df[categorica_col].unique())
-                    df_filtrado = df[df[categorica_col] == categorica_var]
+                    df = df[df[categorica_col] == categorica_var]
 
-                    x = df_filtrado[independent_var]
-                    y = df_filtrado[dependent_var]
+                    x = df[independent_var]
+                    y = df[dependent_var]
 
                     print(categorica_col)
 
@@ -678,6 +679,8 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                         #Calculate the R^2 and RMSE
                         y_pred = func(x, *popt)
+                        df[func_name] = y_pred   
+                        
                         r2 = round(np.corrcoef(y, y_pred)[0,1]**2, 4)
                         rmse = round(np.sqrt(np.mean((y_pred-y)**2)), 4)
 
@@ -746,23 +749,81 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                             st.markdown("$y = b_0/(1 + e^{b_1-b_2*x})^{1/b_3}$")
                             st.markdown(f"Parâmetros: b0 = {popt[0]:.4f}, b1 = {popt[1]:.4f}, b2 = {popt[2]:.4f}, b3 = {popt[3]:.4f}")                       
                     
-
                     
 
                     estatisticas = pd.DataFrame.from_dict(results, orient='index', columns=["R2", "RMSE", "RMSE_rel", "Bias"])
 
-                    fig2 = go.Figure(data=[go.Table(
-                        header=dict(values=list(estatisticas.columns),
-                                    fill_color="#1D250E",
-                                    font_color="white",
-                                    align='center'),
-                        cells=dict(values=[estatisticas.R2, estatisticas.RMSE, estatisticas.RMSE_rel, estatisticas.Bias],
-                                fill_color='lavender',
-                                align='center'))
-                                            ])
+                    st.write(estatisticas)
 
-                    st.plotly_chart(fig2)         
+
+
+                    #Para baixar estatísticas
+                    def download_dataframe_as_excel(dataframe, file_name, sheet_name="Sheet1", button_label="Baixar Dados"):
+                        """
+                        Cria um botão para download de um DataFrame em formato Excel.
                         
+                        Parâmetros:
+                        - dataframe (pd.DataFrame): DataFrame que será convertido para Excel.
+                        - file_name (str): Nome do arquivo Excel para download.
+                        - sheet_name (str): Nome da aba no arquivo Excel.
+                        - button_label (str): Rótulo do botão de download.
+
+                        Retorna:
+                        - None
+                        """
+                        # Cria o buffer em memória
+                        output = io.BytesIO()
+                        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                            dataframe.to_excel(writer, index=True, sheet_name=sheet_name)
+                            writer.save()
+
+                        # Reposiciona o ponteiro no início do buffer
+                        output.seek(0)
+
+                        # Cria o botão de download
+                        st.download_button(
+                            label=button_label,
+                            data=output,
+                            file_name=file_name,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )    
+
+
+                    #Para baixar Valores estimados
+                    download_dataframe_as_excel(
+                        dataframe=estatisticas, 
+                        file_name="Estatisticas_ajuste_Altura.xlsx",
+                        sheet_name="Estatisticas",
+                        button_label="Baixar Estatísticas"
+                    )
+
+
+
+                    #Para baixar Valores estimados
+                    # for func_name in func_selected:
+                    #     if func_name == "Logístico":
+                    #         func = Logistico
+                    #         y_pred = func(x, *popt)
+
+                    #         df[func_name] = y_pred 
+
+                    #     elif func_name == "Gompertz":
+                    #         func = Gompertz
+                    #         y_pred = func(x, *popt)
+                    #         df[func_name] = y_pred 
+                            
+                    #     else:
+                    #         func = Richards
+                    #         y_pred = func(x, *popt)
+                    #         df[func_name] = y_pred                           
+
+                    download_dataframe_as_excel(
+                        dataframe=df, 
+                        file_name="Valores_Estimados_Altura.xlsx",
+                        sheet_name="Valores_Estimados_de_Altura",
+                        button_label="Baixar Valores Estimados de Altura"
+                    )                  
+                   
         
             compare_models()
 

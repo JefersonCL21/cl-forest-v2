@@ -19,3 +19,4 @@ streamlit_option_menu==0.3.2
 openpyxl
 mpld3
 scikit-learn
+xlsxwriter
