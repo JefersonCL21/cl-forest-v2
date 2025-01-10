@@ -602,8 +602,23 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                 independent_var = st.sidebar.selectbox('Independent variable',list(df.columns))
                 dependent_var = st.sidebar.selectbox('Dependent variable',list(df.columns))
-                x = df[independent_var]
-                y = df[dependent_var]
+                # Seleção de variável categórica (começa vazia)
+                categorica_col = st.sidebar.selectbox('Categorical column (opcional)', [" "] + list(df.columns))
+
+                if categorica_col != " ":
+                    categorica_var = st.sidebar.selectbox('Categorical variable (opcional)', df[categorica_col].unique())
+                    df_filtrado = df[df[categorica_col] == categorica_var]
+
+                    x = df_filtrado[independent_var]
+                    y = df_filtrado[dependent_var]
+
+                    print(categorica_col)
+
+                else:
+                    x = df[independent_var]
+                    y = df[dependent_var]
+                    categorica_var = " "
+                
 
             def compare_models():
 
@@ -611,6 +626,8 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                     func_options = ["Logístico", "Gompertz", "Richards"]
                     func_selected = st.multiselect("Select the function to use", func_options)
+
+
                     
                     with st.sidebar.expander("Logístico"): 
                         st.markdown("$y = b_0/(1 + b_1*e^{-b_2*x})$")                    
@@ -647,10 +664,7 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                             
                         else:
                             func = Richards
-
-
-
-                            
+                           
 
                         p0 = p0_dict[func_name]
 
@@ -677,10 +691,48 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                         
 
                         results[func_name] = {"R2": r2, "RMSE": rmse, "RMSE_rel": rrmse, "Bias": bias}
-                        fig = px.scatter(x=x, y=y, labels={'x': independent_var, 'y': dependent_var})
+                        fig = px.scatter(x=x, y=y, labels={'x': independent_var + "(cm)", 'y': dependent_var + "(m)"})
                         fig.update_traces(marker_color="#1D250E")
-                        fig.add_scatter(x=x, y=y_pred, mode='markers', name= func_name, marker=dict(size=3, color = 'red'),)                        
-                        fig.update_layout(title=func_name)
+                        # Adicionar linha de tendência como uma linha contínua
+                        fig.add_scatter(
+                            x=x, 
+                            y=y_pred, 
+                            mode='markers', 
+                            name='ajuste', 
+                            line=dict(color='red', width=2)
+                        )  
+
+                        fig.update_layout(
+                            title=dict(
+                                text=categorica_var,        # Título do gráfico
+                                font=dict(size=20),         # Tamanho da fonte do título
+                                x=0.5,                      # Centraliza o título (0: esquerda, 1: direita)
+                                xanchor='center'            # Âncora no centro
+                            ),
+                            template="plotly_white",        # Define o fundo branco
+                            plot_bgcolor="white",           # Garante que o fundo do gráfico seja branco
+                            paper_bgcolor="white",          # Garante que o fundo externo seja branco
+                            xaxis=dict(
+                                title_font=dict(size=18, color="black"),  # Aumenta o tamanho da fonte do eixo X
+                                tickfont=dict(size=14, color="black"),    # Aumenta o tamanho da fonte dos ticks do eixo X
+                                showline=True,                            # Mostra a linha do eixo X
+                                showgrid=False,                           # Remove linhas de grade             
+                                linecolor="gray",                         # Cor da linha do eixo X
+                                linewidth=0.5                             # Espessura da linha do eixo X
+                            ),
+                            yaxis=dict(
+                                title_font=dict(size=18, color="black"),  # Aumenta o tamanho da fonte do eixo Y
+                                tickfont=dict(size=14, color="black"),    # Aumenta o tamanho da fonte dos ticks do eixo Y
+                                showline=True,                            # Mostra a linha do eixo Y
+                                showgrid=True,                            # Remove linhas de grade
+                                linecolor="gray",                         # Cor da linha do eixo Y
+                                linewidth=0.5                             # Espessura da linha do eixo Y
+                            ),
+                            autosize=False,  # Desativa o redimensionamento automático
+                            width=700,      # Largura do gráfico
+                            height=600,      # Altura do gráfico
+                        )
+
                         st.plotly_chart(fig)
 
 
@@ -709,11 +761,8 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                                 align='center'))
                                             ])
 
-                    st.plotly_chart(fig2) 
-
-            
+                    st.plotly_chart(fig2)         
                         
-
         
             compare_models()
 
