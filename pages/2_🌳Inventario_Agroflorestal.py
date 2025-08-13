@@ -1973,13 +1973,17 @@ if page == 'Sucupira Agroflorestas':
     elif Uso == 'Análise de solos':
 
 
-#teste de importação
+        #teste de importação
         @st.cache_data
-        def carregarDadosAnaliseSolo(uploaded_file, sheet_name):
-            if uploaded_file is not None:
-                df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
-                return df
-            return pd.DataFrame()
+        def carregarDadosAnaliseSolo(excel_bytes, sheet_name):
+            import io
+            if not excel_bytes:
+                return pd.DataFrame()
+            try:
+                return pd.read_excel(io.BytesIO(excel_bytes), sheet_name=sheet_name, engine='openpyxl')
+            except Exception as e:
+                st.error(f"Falha ao ler a aba '{sheet_name}'. Confira o arquivo: {e}")
+                return pd.DataFrame()
 
         st.title('Aplicativo de Análise de Solo')
 
@@ -1987,17 +1991,63 @@ if page == 'Sucupira Agroflorestas':
         uploaded_file = st.file_uploader("Escolha um arquivo Excel", type="xlsx")
 
         if uploaded_file is not None:
+            # Ler bytes uma única vez e reutilizar
+            if 'solo_excel_bytes' not in st.session_state or st.session_state.get('solo_prev', {}).get('file') != getattr(uploaded_file, 'name', None):
+                st.session_state['solo_excel_bytes'] = uploaded_file.getvalue()
+            import io
+            try:
+                xls = pd.ExcelFile(io.BytesIO(st.session_state['solo_excel_bytes']), engine='openpyxl')
+            except Exception as e:
+                st.error(f"Falha ao abrir o Excel. Confira o arquivo: {e}")
+                st.stop()
             # Seleção da aba do Excel para cada análise
-            sheet_analise = st.selectbox("Selecione a aba para Análise de Talhão:", pd.ExcelFile(uploaded_file).sheet_names)
-            sheet_referencia = st.selectbox("Selecione a aba para Análise de Referência:", pd.ExcelFile(uploaded_file).sheet_names)
-            sheet_area_talhao = st.selectbox("Selecione a aba para Área do Talhão:", pd.ExcelFile(uploaded_file).sheet_names)
+            sheet_analise = st.selectbox("Selecione a aba para Análise de Talhão:", xls.sheet_names)
+            sheet_referencia = st.selectbox("Selecione a aba para Análise de Referência:", xls.sheet_names)
+            sheet_area_talhao = st.selectbox("Selecione a aba para Área do Talhão:", xls.sheet_names)
 
-            # Carregar os dados
-            analiseTalhao = carregarDadosAnaliseSolo(uploaded_file, sheet_analise)
-            analiseReferencia = carregarDadosAnaliseSolo(uploaded_file, sheet_referencia)
-            areaTalhao = carregarDadosAnaliseSolo(uploaded_file, sheet_area_talhao)
+            # Resetar confirmação se arquivo/abas mudarem
+            if 'solo_prev' not in st.session_state:
+                st.session_state['solo_prev'] = {}
+            current_sel = {
+                'file': getattr(uploaded_file, 'name', None),
+                'analise': sheet_analise,
+                'referencia': sheet_referencia,
+                'area': sheet_area_talhao,
+            }
+            if st.session_state['solo_prev'] != current_sel:
+                st.session_state['solo_prev'] = current_sel
+                st.session_state['solo_dados_carregados'] = False
+
+            # Aguardar seleção explícita do usuário antes de processar
+            if 'solo_dados_carregados' not in st.session_state:
+                st.session_state['solo_dados_carregados'] = False
+
+            carregar = st.button('Carregar dados', type='primary', help='Selecione as três abas e clique para prosseguir.')
+
+            if not st.session_state['solo_dados_carregados']:
+                # Não prossegue até que o usuário confirme
+                if carregar:
+                    st.session_state['solo_dados_carregados'] = True
+                else:
+                    # Fica em branco até confirmação do usuário
+                    st.stop()
+
+            # Carregar os dados após confirmação do usuário
+            excel_bytes = st.session_state.get('solo_excel_bytes')
+            analiseTalhao = carregarDadosAnaliseSolo(excel_bytes, sheet_analise)
+            analiseReferencia = carregarDadosAnaliseSolo(excel_bytes, sheet_referencia)
+            areaTalhao = carregarDadosAnaliseSolo(excel_bytes, sheet_area_talhao)
 
             if not analiseTalhao.empty and not analiseReferencia.empty and not areaTalhao.empty:
+                # Garantir que as colunas esperadas existam antes de prosseguir
+                missing = []
+                if 'Talhao' not in analiseTalhao.columns:
+                    missing.append("Análise de Talhão: 'Talhao'")
+                if 'especie' not in analiseReferencia.columns:
+                    missing.append("Análise de Referência: 'especie'")
+                if missing:
+                    st.error("Confira as tabelas: campos obrigatórios ausentes -> " + ", ".join(missing))
+                    st.stop()
                 # Lista com os talhões
                 talhoes = analiseTalhao['Talhao'].unique()
                 especie = analiseReferencia['especie'].unique()
@@ -2019,13 +2069,24 @@ if page == 'Sucupira Agroflorestas':
                     # Inicializar a figura
                     fig = go.Figure()
 
-                    # Adicionar linha zero
-                    df_zero = analiseTalhao.iloc[:1, 1:].copy()
-                    df_zero.loc[:, :] = 0
+                    # Preparar referência pela espécie selecionada e colunas comuns numéricas
+                    ref_df = analiseReferencia.loc[analiseReferencia['especie'] == especie_selecionada]
+                    if ref_df.empty:
+                        st.error("Confira as tabelas: espécie selecionada não encontrada na Análise de Referência.")
+                        st.stop()
+                    ref_row = ref_df.iloc[:1, 1:].apply(pd.to_numeric, errors='coerce')
 
+                    talhao_num_cols = list(analiseTalhao.columns[1:])
+                    ref_num_cols = list(ref_row.columns)
+                    common_cols = [c for c in talhao_num_cols if c in ref_num_cols]
+                    if not common_cols:
+                        st.error("Confira as tabelas: não há colunas numéricas comuns entre Talhão e Referência.")
+                        st.stop()
+
+                    # Adicionar linha zero (ideal) nas colunas comuns
                     fig.add_trace(go.Scatterpolar(
-                        r=df_zero.iloc[0, :],
-                        theta=df_zero.columns,
+                        r=[0]*len(common_cols),
+                        theta=common_cols,
                         fill='toself',
                         name='Ideal',
                         line=dict(color='grey', width=1)
@@ -2034,11 +2095,16 @@ if page == 'Sucupira Agroflorestas':
                     # Adicionar linhas para cada talhão selecionado
                     for talhao_selecionado in talhoes_selecionados:
                         df_porcentagem = analiseTalhao.loc[analiseTalhao['Talhao'] == talhao_selecionado].copy()
-                        df_porcentagem.iloc[:, 1:] = ((df_porcentagem.iloc[:, 1:] * 100) / analiseReferencia.iloc[:, 1:].values) - 100
+                        if df_porcentagem.empty:
+                            continue
+                        # Converter numéricas e alinhar pelas colunas comuns
+                        df_porcentagem[common_cols] = df_porcentagem[common_cols].apply(pd.to_numeric, errors='coerce')
+                        ref_vals = ref_row[common_cols].values
+                        df_porcentagem.loc[:, common_cols] = ((df_porcentagem[common_cols] * 100) / ref_vals) - 100
 
                         fig.add_trace(go.Scatterpolar(
-                            r=df_porcentagem.iloc[:, 1:].values[0],
-                            theta=df_porcentagem.columns[1:],
+                            r=df_porcentagem[common_cols].iloc[0].values,
+                            theta=common_cols,
                             fill='toself',
                             name=talhao_selecionado
                         ))
@@ -2076,24 +2142,7 @@ if page == 'Sucupira Agroflorestas':
                     st.write(f"Valor referência para o {especie_selecionada}")
                     st.write(analiseReferencia)
 
-                colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4= st.columns(4)
-
-                with colFatorAgrupamento1:
-                    colunas = analiseTalhao.columns
-                    
-                    fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
-                    # Checando se a coluna é categórica
-                    if analiseTalhao[fatorAgrupamento].dtype == 'object':
-                        pass
-                    else:
-                        st.error('Erro: A coluna selecionada não é categórica')
-                with colPCA2:
-                    n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.",  min_value=2, max_value=len(colunas)-1))
-
-                with colcluster3:
-                    totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.",  min_value=2, max_value=5))
-                with colVarPCA4:
-                    valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o total de clusters.",  min_value=1, max_value=n_components))
+                # (Controles de PCA movidos para dentro do expander)
                 
 
                 import pandas as pd
@@ -2101,30 +2150,60 @@ if page == 'Sucupira Agroflorestas':
                 from sklearn.cluster import KMeans
                 from sklearn.preprocessing import StandardScaler
 
-                col1_, colGraficoCluster,  colGraficoVarImportancia, col2_ = st.columns([0.5,3,3,1])
+                enh_PCA = st.expander("Análise de PCA e Agrupamento", expanded=False)
+                with enh_PCA:
+                    # Filtros e parâmetros da PCA dentro do expander
+                    colFatorAgrupamento1, colPCA2, colcluster3, colVarPCA4 = st.columns(4)
+                    with colFatorAgrupamento1:
+                        colunas = analiseTalhao.columns
+                        fatorAgrupamento = st.selectbox('Fator de agrupamento', colunas)
+                        if analiseTalhao[fatorAgrupamento].dtype != 'object':
+                            st.error('Erro: A coluna selecionada não é categórica')
+                    # Determinar colunas numéricas para PCA (exclui a coluna de agrupamento)
+                    numeric_cols = analiseTalhao.drop(columns=[fatorAgrupamento], errors='ignore').select_dtypes(include='number').columns.tolist()
+                    if len(numeric_cols) < 3:
+                        st.error('Para PCA e agrupamento, são necessárias pelo menos 3 variáveis numéricas.')
+                        st.stop()
+                    with colPCA2:
+                        n_components = int(st.number_input("Total de PCA", value=3, help="Escolha o total de PCA para ser usada no agrupamento.", min_value=2, max_value=max(2, len(numeric_cols))))
+                    with colcluster3:
+                        totalCLUSTER = int(st.number_input("Total de cluster", value=4, help="Escolha o total de clusters.", min_value=2, max_value=5))
+                    with colVarPCA4:
+                        valorPCA = int(st.number_input("Carregamento-PCA", value=1, help="Escolha o componente para exibir os carregamentos.", min_value=1, max_value=n_components))
 
-                analiseTalhaoPCA = analiseTalhao.copy()
+                    # Área de visualização: uma figura de clusters e um gráfico de carregamentos
+                    colGraficoCluster, colGraficoVarImportancia = st.columns([1, 1])
 
-                # Selecionando todas as colunas exceto 'Talhao'
-                scaler = StandardScaler()
-                scaled_df = scaler.fit_transform(analiseTalhaoPCA.drop(fatorAgrupamento, axis=1))
+                    analiseTalhaoPCA = analiseTalhao.copy()
 
-                # Aplicar PCA
-                pca = PCA()
-                pca_result = pca.fit_transform(scaled_df)
+                    # Selecionar apenas variáveis numéricas e tratar ausentes
+                    subset = analiseTalhaoPCA[numeric_cols].apply(pd.to_numeric, errors='coerce')
+                    subset = subset.dropna(axis=0, how='any')
+                    if subset.shape[0] < 2:
+                        st.error('Dados insuficientes após remover valores ausentes. Forneça ao menos 2 linhas completas.')
+                        st.stop()
+                    if totalCLUSTER > subset.shape[0]:
+                        st.error(f"Número de clusters ({totalCLUSTER}) maior que número de amostras ({subset.shape[0]}). Reduza os clusters.")
+                        st.stop()
+                    scaler = StandardScaler()
+                    scaled_df = scaler.fit_transform(subset)
 
-                # Adicionar resultados da PCA ao DataFrame de maneira iterativa
-                for i in range(n_components):
-                    analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:,i]
+                    # Aplicar PCA
+                    pca = PCA(n_components=min(n_components, scaled_df.shape[1]))
+                    pca_result = pca.fit_transform(scaled_df)
 
-                # Criar uma lista com os nomes dos componentes
-                PCA_features = [f'PCA{i+1}' for i in range(n_components)]
+                    # Adicionar resultados da PCA ao DataFrame de maneira iterativa
+                    for i in range(n_components):
+                        analiseTalhaoPCA[f'PCA{i+1}'] = pca_result[:, i]
 
-                # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
-                kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA[PCA_features])
+                    # Criar uma lista com os nomes dos componentes
+                    PCA_features = [f'PCA{i+1}' for i in range(min(n_components, scaled_df.shape[1]))]
 
-                analiseTalhaoPCA['Cluster'] = kmeans.labels_
+                    # Realizar o agrupamento k-means (vamos supor 2 clusters para este exemplo)
+                    kmeans = KMeans(n_clusters=totalCLUSTER, random_state=0).fit(analiseTalhaoPCA.loc[subset.index, PCA_features])
 
+                    analiseTalhaoPCA['Cluster'] = kmeans.labels_
+                
                 import numpy as np
                 from numpy.linalg import eig
                 import plotly.graph_objects as go
@@ -2170,22 +2249,23 @@ if page == 'Sucupira Agroflorestas':
                         x1=mean[0] + 2*np.sqrt(eig_vals[0]),
                         y1=mean[1] + 2*np.sqrt(eig_vals[1]),
                         line_color=colors[i],
-                        opacity=0.2,  # Faz a elipse semi-transparente
+                        opacity=0.2,
                         fillcolor=colors[i],
                         line_width=2,
                     )
 
+                # Layout e exibição única do gráfico de clusters
                 figPCA.update_layout(
                     title='PCA e Agrupamento K-means dos Talhões',
                     xaxis_title='PCA1 - {0:.1f}%'.format(explained_variance[0]*100),
-                    yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100)
+                    yaxis_title='PCA2 - {0:.1f}%'.format(explained_variance[1]*100),
+                    height=360,
+                    margin=dict(l=10, r=10, t=40, b=10)
                 )
-
                 with colGraficoCluster:
-                    st.plotly_chart(figPCA)
+                    st.plotly_chart(figPCA, use_container_width=True)
 
-
-                        # Obtenha os coeficientes de carregamento para o primeiro componente principal
+                # Obtenha os coeficientes de carregamento para o primeiro componente principal
                 loadings = pca.components_[valorPCA-1]
 
                 # Crie um índice para cada variável
@@ -2201,11 +2281,11 @@ if page == 'Sucupira Agroflorestas':
                 figImportancia = px.bar(df_loadings, x='Variable', y='Loading', title=f'Contribuição das variáveis para o PCA{valorPCA}', labels={'Variable': 'Variáveis', 'Loading': 'Carregamento'})
 
                 # Altere a orientação do texto do eixo x para vertical
-                figImportancia.update_layout(xaxis_tickangle=-90)
+                figImportancia.update_layout(xaxis_tickangle=-90, height=360, margin=dict(l=10, r=10, t=40, b=40))
 
 
                 with colGraficoVarImportancia:
-                    st.plotly_chart(figImportancia)
+                    st.plotly_chart(figImportancia, use_container_width=True)
 
                 enh_qualFuste = st.expander("Determinação da Necessidade de Calagem para os talhões", expanded=False)
 
@@ -2323,12 +2403,19 @@ if page == 'Sucupira Agroflorestas':
 
 
                 def Qntd_AduboFosfatado(P2O5_kgha, col_Porc_Perda, Preencher): 
+                    if col_Porc_Perda <= 0 or Preencher <= 0:
+                        return 0
                     Qntd_AduboFosfatado_kgha =  P2O5_kgha * 100 / col_Porc_Perda
-                    Qntd_AduboFosfatado_kgha  = 100 * Qntd_AduboFosfatado_kgha / Preencher   
+                    Qntd_AduboFosfatado_kgha  = 100 * Qntd_AduboFosfatado_kgha / Preencher
+                    if Qntd_AduboFosfatado_kgha < 0:
+                        Qntd_AduboFosfatado_kgha = 0
                     return Qntd_AduboFosfatado_kgha
 
                 def P2O5_kgHa(col_fosfatagemIdeal, P_meh1): 
-                    P2O5_kgha = (col_fosfatagemIdeal - P_meh1) * 4.58 # multipilcar por 2 para transformar em P e depois por 2.29 para P205 kg/ha (4.58)
+                    # Se o valor medido já for >= ideal, não há necessidade (trunca em zero)
+                    P2O5_kgha = (col_fosfatagemIdeal - P_meh1) * 4.58  # 2x para P e 2.29x para P2O5
+                    if P2O5_kgha < 0:
+                        P2O5_kgha = 0
                     return P2O5_kgha
                 
                 with enh_Fosfatagem:
@@ -2414,8 +2501,12 @@ if page == 'Sucupira Agroflorestas':
                 enh_Potassagem = st.expander("Determinação da Necessidade potassagem para os talhões", expanded=False) 
 
                 def Nc_RecomendadaK2O(k20_kg_ha, col_Potassagem_Preencher):
-
-                    return k20_kg_ha * 100 / col_Potassagem_Preencher
+                    if col_Potassagem_Preencher <= 0:
+                        return 0
+                    valor = k20_kg_ha * 100 / col_Potassagem_Preencher
+                    if valor < 0:
+                        valor = 0
+                    return valor
 
                 def Nc_potassio(K, T):
                     K_CTC_ph7 = 100 * K / T
@@ -2424,7 +2515,8 @@ if page == 'Sucupira Agroflorestas':
                     k_mg_dm3 = k_cmol_dm3 * 390
                     k_kg_ha = k_mg_dm3 * 2
                     k20_kg_ha = k_kg_ha * 1.205
-
+                    if k20_kg_ha < 0:
+                        k20_kg_ha = 0
                     return k20_kg_ha
                 
 

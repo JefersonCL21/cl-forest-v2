@@ -1,2 +1,5 @@
 chaves
 build-and-run.sh
+.venv/
+__pycache__/
+*.pyc

@@ -1,25 +1,31 @@
-# Usar imagem base do Python
-FROM python:3.9
+FROM python:3.10-slim
 
-# Definir o diretório de trabalho
+# Ambiente UTF-8 e pip mais silencioso/rápido
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
 WORKDIR /app
 
-# Instalar dependências do sistema necessárias para GeoPandas e Fiona
-RUN apt-get update && apt-get install -y \
-    gdal-bin \
-    libgdal-dev \
-    python3-dev \
-    && apt-get clean
+# Dependências básicas do sistema (mínimas)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    ca-certificates \
+    libexpat1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copiar o arquivo requirements.txt e instalar dependências Python
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependências Python primeiro (melhor cache)
+COPY requirements.txt ./
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante dos arquivos para o container
+# Copiar o restante do app
 COPY . .
 
-# Expor a porta padrão do Streamlit
 EXPOSE 8080
 
-# Comando para rodar o Streamlit
-CMD ["sh", "-c", "streamlit run 1_🏠Inicio.py --server.port=${PORT:-8080} --server.address=0.0.0.0"]
+CMD ["sh", "-c", "streamlit run '1_🏠Inicio.py' --server.port=${PORT:-8080} --server.address=0.0.0.0"]
