@@ -3,3 +3,14 @@ primaryColor="#363636"
 backgroundColor="#FFFAFA"
 secondaryBackgroundColor= "#D3D3D3"
 textColor="#35401E"
+
+[server]
+headless = true
+address = "0.0.0.0"
+port = 8080
+enableCORS = false
+enableXsrfProtection = false
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
