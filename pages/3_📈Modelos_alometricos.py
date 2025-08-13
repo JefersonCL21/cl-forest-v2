@@ -32,6 +32,7 @@ import matplotlib.pyplot as plt
 import math
 import io
 import xlsxwriter
+import adicionarLogo
 
 st.set_page_config(
     page_title="CL Forest Biometrics",
@@ -42,31 +43,8 @@ st.set_page_config(
 #adicionar a logo da empresa
 #adicionar a logo da empresa
 
-def add_logo():
-    st.markdown(
-        """
-        <style>
-            [data-testid="stSidebarNav"] {
-                background-image: url(https://i.imgur.com/7dH5wkT.jpeg);
-                background-repeat: no-repeat;
-                padding-top: 120px;
-                background-size: 230px 200px;
-                background-position: 6px 5px;
-            }
-            [data-testid="stSidebarNav"]::before {
-                content: "Courageous Land";
-                margin-left: 20px;
-                margin-top: 20px;
-                font-size: 20px;
-                position: relative;
-                top: 80px;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
-add_logo()
+adicionarLogo.add_logo()
 
 #adicionar o plano de fundo do side bar
 side_bg = 'imagens//image.png'
@@ -457,6 +435,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                     data=csv1,
                     file_name='ParametrosModelosAjustados.csv',
                     mime='text/csv',
+                    key='dl_modelos_estimados'
                 )
             else:
                 pass
@@ -472,6 +451,7 @@ if modelos == 'Modelos ajustados' and selectbox == "Hipsométricos":
                 data=csv,
                 file_name='ParametrosModelosAjustados.csv',
                 mime='text/csv',
+                key='dl_modelos_parametros'
             )
 
     enh_aplicar_mod = st.expander("Aplicar os modelos em um novo banco de dados", expanded=False)  

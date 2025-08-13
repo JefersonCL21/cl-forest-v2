@@ -24,6 +24,7 @@ import streamlit as st
 from dateutil.rrule import rrule, YEARLY
 import io
 import datetime
+import adicionarLogo
 
 
 
@@ -36,31 +37,7 @@ st.set_page_config(
 
 #adicionar a logo da empresa
 
-def add_logo():
-    st.markdown(
-        """
-        <style>
-            [data-testid="stSidebarNav"] {
-                background-image: url(https://i.imgur.com/7dH5wkT.jpeg);
-                background-repeat: no-repeat;
-                padding-top: 120px;
-                background-size: 230px 200px;
-                background-position: 6px 5px;
-            }
-            [data-testid="stSidebarNav"]::before {
-                content: "Courageous Land";
-                margin-left: 20px;
-                margin-top: 20px;
-                font-size: 20px;
-                position: relative;
-                top: 80px;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-add_logo()
+adicionarLogo.add_logo()
 
 #adicionar o plano de fundo do side bar
 side_bg = 'imagens//image.png'

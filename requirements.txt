@@ -13,7 +13,7 @@ pyshp==2.3.1
 python_dateutil==2.8.2
 scipy==1.9.3
 seaborn==0.11.2
-streamlit==1.18.0
+streamlit==1.44.1
 streamlit_metrics==0.1.0
 streamlit-folium==0.11.0
 streamlit_option_menu==0.3.2

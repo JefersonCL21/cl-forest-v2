@@ -25,8 +25,14 @@ def sidebar_bg(side_bg):
    st.markdown(
       f"""
       <style>
+      /* Aplica imagem no fundo sem afetar layout */
       [data-testid="stSidebar"] > div:first-child {{
-          background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()});
+          background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()}) no-repeat center top / cover;
+      }}
+      /* Garante que a navegação/ícones fiquem visíveis acima do fundo */
+      [data-testid="stSidebar"] [data-testid="stSidebarNav"] {{
+          position: relative;
+          z-index: 1;
       }}
       </style>
       """,

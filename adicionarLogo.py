@@ -14,18 +14,12 @@ def add_logo():
             [data-testid="stSidebarNav"] {
                 background-image: url(https://i.imgur.com/7dH5wkT.jpeg);
                 background-repeat: no-repeat;
-                padding-top: 120px;
-                background-size: 230px 200px;
-                background-position: 6px 5px;
+                padding-top: 230px;
+                background-size: 230px 230px;
+                /* Centraliza horizontalmente; 10px a partir do topo */
+                background-position: center 0px;
             }
-            [data-testid="stSidebarNav"]::before {
-                content: "Courageous Land";
-                margin-left: 20px;
-                margin-top: 20px;
-                font-size: 20px;
-                position: relative;
-                top: 80px;
-            }
+
         </style>
         """,
         unsafe_allow_html=True,
