@@ -145,6 +145,7 @@ class ControleCompeticao(MacroElement):
 (function () {
   const mapa = {{ this._parent.get_name() }};
   const copas = {{ this.camada }};
+  const grupo = {{ this.grupo }};  // item "Índice de competição" da caixa de camadas
   const A = {{ this.dados }};
   const LIM = [0.25, 0.5, 0.75];
   const CORES = ['#4DD0E1', '#FFE14D', '#FF9933', '#FF3B30'];
@@ -171,8 +172,14 @@ class ControleCompeticao(MacroElement):
     return out;
   }
 
-  // o estilo das copas passa a vir do índice (vale também ao tirar o destaque do mouse)
-  copas.options.style = f => ({color: CORES[classe(ci[IDX[f.properties.id_copa]])], weight: 1.6, fillOpacity: 0});
+  // Índice ligado: contorno e preenchimento na cor da classe; desligado: segmentação normal.
+  // (vale também ao tirar o destaque do mouse, que reaplica options.style)
+  copas.options.style = f => {
+    if (!mapa.hasLayer(grupo)) return {color: '#FFD60A', weight: 1.6, fillOpacity: 0};
+    const c = CORES[classe(ci[IDX[f.properties.id_copa]])];
+    return {color: c, weight: 1.6, fillColor: c, fillOpacity: {{ this.opacidade }}};
+  };
+  const redesenhar = () => copas.eachLayer(l => copas.resetStyle(l));
 
   const ctl = L.control({position: 'topright'});
   ctl.onAdd = function () {
@@ -194,6 +201,13 @@ class ControleCompeticao(MacroElement):
   };
   ctl.addTo(mapa);
   const caixa = ctl.getContainer();
+  caixa.style.display = mapa.hasLayer(grupo) ? '' : 'none';
+  grupo.on('add', () => {
+    caixa.style.display = '';
+    if (!mapa.hasLayer(copas)) mapa.addLayer(copas);  // o índice é mostrado nas copas
+    redesenhar();
+  });
+  grupo.on('remove', () => { caixa.style.display = 'none'; redesenhar(); });
 
   function atualizar(R) {
     ci = hegyi(R);
@@ -204,8 +218,8 @@ class ControleCompeticao(MacroElement):
       l.feature.properties.hegyi = Number(v.toFixed(2));
       cont[classe(v)]++;
       soma += v;
-      copas.resetStyle(l);
     });
+    redesenhar();
     caixa.querySelector('.raio').textContent = R + ' m';
     caixa.querySelector('.classes').innerHTML = CORES.map((c, k) =>
       '<div style="display:flex;align-items:center;gap:8px;margin:3px 0">' +
@@ -219,10 +233,12 @@ class ControleCompeticao(MacroElement):
 {% endmacro %}
 """)
 
-    def __init__(self, camada, dados, raio=10, raio_min=6, raio_max=20):
+    def __init__(self, camada, grupo, dados, raio=10, raio_min=6, raio_max=20, opacidade=0.45):
         super().__init__()
         self._name = "ControleCompeticao"
         self.camada = camada.get_name()
+        self.grupo = grupo.get_name()
+        self.opacidade = opacidade
         self.dados = json.dumps(dados, separators=(",", ":"))
         self.raio, self.raio_min, self.raio_max = raio, raio_min, raio_max
 
@@ -301,6 +317,9 @@ segmentacao = folium.GeoJson(
     ),
 )
 segmentacao.add_to(m)
+# Liga/desliga o índice de competição (colore a segmentação; a régua e a legenda só aparecem ligado).
+indice_competicao = folium.FeatureGroup(name='Índice de competição (Hegyi)', show=False)
+indice_competicao.add_to(m)
 
 folium.GeoJson(
     camadas["caixas"],
@@ -318,7 +337,7 @@ folium.GeoJson(
 ).add_to(m)
 
 m.fit_bounds([[s, w], [n, e]])
-ControleCompeticao(segmentacao, competicao, raio=10).add_to(m)
+ControleCompeticao(segmentacao, indice_competicao, competicao, raio=10).add_to(m)
 
 folium.LayerControl(position='topleft', collapsed=False).add_to(m)
 # Sem largura fixa: o mapa ocupa toda a largura da página.
