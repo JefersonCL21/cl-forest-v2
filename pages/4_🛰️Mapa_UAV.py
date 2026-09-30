@@ -5,10 +5,13 @@ import re
 from pathlib import Path
 
 import folium
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
+from branca.element import MacroElement
+from jinja2 import Template
 
 import adicionarLogo
 import importarDados
@@ -73,7 +76,17 @@ def carregarVoo(pasta):
         with open(pasta / "vetores" / f"copas_{nome}.geojson", encoding="utf-8") as f:
             camadas[nome] = json.load(f)
     copas = pd.DataFrame([ft["properties"] for ft in camadas["poligonos"]["features"]])
-    return meta, camadas, copas
+    # posição (UTM, m) e DAP de cada copa para o índice de competição calculado no navegador
+    cen = gpd.GeoDataFrame.from_features(camadas["centroides"]["features"], crs="EPSG:4326")
+    cen = cen.to_crs(cen.estimate_utm_crs())
+    pos = {i: (round(p.x, 2), round(p.y, 2)) for i, p in zip(cen["id_copa"], cen.geometry)}
+    competicao = {
+        "ids": copas["id_copa"].tolist(),
+        "x": [pos[i][0] for i in copas["id_copa"]],
+        "y": [pos[i][1] for i in copas["id_copa"]],
+        "dap": copas["dap_cm_est"].tolist(),
+    }
+    return meta, camadas, copas, competicao
 
 
 def ordemNatural(nome):
@@ -120,14 +133,106 @@ def popupTalhao(nome, area_ha, sel):
     return folium.Popup(html, max_width=290)
 
 
-st.sidebar.markdown("## Mapa UAV")
-voo = st.sidebar.selectbox("Voo", list(VOOS))
-meta, camadas, copas = carregarVoo(str(VOOS[voo]))
+class ControleCompeticao(MacroElement):
+    """Índice de competição de Hegyi calculado no navegador.
+
+    CI_i = Σ (DAP_j / DAP_i) / d_ij para as vizinhas j a até R metros. A régua
+    muda o raio sem recarregar a página; o contorno de cada copa recebe a cor
+    da classe de competição e a legenda mostra quantas copas há em cada uma.
+    """
+    _template = Template("""
+{% macro script(this, kwargs) %}
+(function () {
+  const mapa = {{ this._parent.get_name() }};
+  const copas = {{ this.camada }};
+  const A = {{ this.dados }};
+  const LIM = [0.25, 0.5, 0.75];
+  const CORES = ['#4DD0E1', '#FFE14D', '#FF9933', '#FF3B30'];
+  const NOMES = ['baixa (< 0,25)', 'moderada (0,25 – 0,50)', 'alta (0,50 – 0,75)', 'muito alta (≥ 0,75)'];
+  const n = A.ids.length, IDX = {};
+  A.ids.forEach((id, i) => { IDX[id] = i; });
+  let ci = new Float64Array(n);
+  const classe = v => v < LIM[0] ? 0 : v < LIM[1] ? 1 : v < LIM[2] ? 2 : 3;
+  const fmt = (v, c) => v.toFixed(c).replace('.', ',');
+
+  function hegyi(R) {
+    const out = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
+        const dx = A.x[j] - A.x[i]; if (dx > R || dx < -R) continue;
+        const dy = A.y[j] - A.y[i]; if (dy > R || dy < -R) continue;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d > 0 && d <= R) s += A.dap[j] / A.dap[i] / d;
+      }
+      out[i] = s;
+    }
+    return out;
+  }
+
+  // o estilo das copas passa a vir do índice (vale também ao tirar o destaque do mouse)
+  copas.options.style = f => ({color: CORES[classe(ci[IDX[f.properties.id_copa]])], weight: 1.6, fillOpacity: 0});
+
+  const ctl = L.control({position: 'topright'});
+  ctl.onAdd = function () {
+    const div = L.DomUtil.create('div');
+    div.style.cssText = 'font:12px Arial,sans-serif;color:#2B3A31;background:#fff;padding:9px 11px;' +
+      'border-radius:6px;box-shadow:0 1px 5px rgba(0,0,0,.4);width:220px';
+    div.innerHTML =
+      '<div style="font-weight:700;font-size:13px;color:#1F3D2B">Competição · índice de Hegyi</div>' +
+      '<div style="display:flex;justify-content:space-between;margin:7px 0 2px">' +
+      '<span>Raio de busca</span><b class="raio"></b></div>' +
+      '<input class="regua" type="range" min="{{ this.raio_min }}" max="{{ this.raio_max }}" step="1" ' +
+      'value="{{ this.raio }}" style="width:100%;margin:0">' +
+      '<div class="classes" style="margin-top:6px"></div>' +
+      '<div class="media" style="margin-top:6px;color:#5E6E64"></div>' +
+      '<div style="margin-top:4px;color:#5E6E64;font-size:11px">CI = Σ (DAP<sub>j</sub> / DAP<sub>i</sub>) / d<sub>ij</sub></div>';
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    return div;
+  };
+  ctl.addTo(mapa);
+  const caixa = ctl.getContainer();
+
+  function atualizar(R) {
+    ci = hegyi(R);
+    const cont = [0, 0, 0, 0];
+    let soma = 0;
+    copas.eachLayer(l => {
+      const v = ci[IDX[l.feature.properties.id_copa]];
+      l.feature.properties.hegyi = Number(v.toFixed(2));
+      cont[classe(v)]++;
+      soma += v;
+      copas.resetStyle(l);
+    });
+    caixa.querySelector('.raio').textContent = R + ' m';
+    caixa.querySelector('.classes').innerHTML = CORES.map((c, k) =>
+      '<div style="display:flex;align-items:center;gap:8px;margin:3px 0">' +
+      '<span style="width:22px;border-top:3px solid ' + c + '"></span>' +
+      '<span style="flex:1">' + NOMES[k] + '</span><b>' + cont[k] + '</b></div>').join('');
+    caixa.querySelector('.media').textContent = 'CI médio: ' + fmt(soma / n, 2) + ' · ' + n + ' copas';
+  }
+  caixa.querySelector('.regua').addEventListener('input', e => atualizar(Number(e.target.value)));
+  atualizar({{ this.raio }});
+})();
+{% endmacro %}
+""")
+
+    def __init__(self, camada, dados, raio=10, raio_min=6, raio_max=20):
+        super().__init__()
+        self._name = "ControleCompeticao"
+        self.camada = camada.get_name()
+        self.dados = json.dumps(dados, separators=(",", ":"))
+        self.raio, self.raio_min, self.raio_max = raio, raio_min, raio_max
+
+
+voo = next(iter(VOOS))
+meta, camadas, copas, competicao = carregarVoo(str(VOOS[voo]))
 
 talhoes = importarDados.carregarDadosSHP()
 talhoes = talhoes[talhoes.geometry.notna()].to_crs(epsg=4326)
 nomes = sorted(talhoes["Name"].dropna().unique(), key=ordemNatural)
-escolha = st.sidebar.selectbox("Talhão", ["Toda a fazenda"] + nomes)
 # área de cada talhão (soma das partes: T2 e T6 têm mais de um polígono)
 area_ha = talhoes.to_crs(talhoes.estimate_utm_crs()).geometry.area.groupby(talhoes["Name"]).sum() / 1e4
 
@@ -181,16 +286,21 @@ for nome in nomes:
     ).add_to(grupo_talhoes)
 grupo_talhoes.add_to(m)
 
-folium.GeoJson(
+# Copas: a cor do contorno vem do índice de competição (ControleCompeticao, mais abaixo).
+for ft in camadas["poligonos"]["features"]:
+    ft["properties"]["hegyi"] = 0.0  # preenchido no navegador
+segmentacao = folium.GeoJson(
     camadas["poligonos"],
     name='Segmentação (copas)',
-    style_function=lambda f: {'color': '#FFD60A', 'weight': 1.5, 'fillOpacity': 0},
-    highlight_function=lambda f: {'color': '#FF9F0A', 'weight': 3},
+    style_function=lambda f: {'color': '#FFD60A', 'weight': 1.6, 'fillOpacity': 0},
+    highlight_function=lambda f: {'weight': 3.5},
     tooltip=folium.GeoJsonTooltip(
-        fields=['talhao', 'area_m2', 'dap_cm_est', 'confianca'],
-        aliases=['Talhão:', 'Área da copa (m²):', 'DAP estimado (cm):', 'Confiança:'],
+        fields=['talhao', 'area_m2', 'dap_cm_est', 'hegyi', 'confianca'],
+        aliases=['Talhão:', 'Área da copa (m²):', 'DAP estimado (cm):', 'Índice de Hegyi:', 'Confiança:'],
+        localize=True,
     ),
-).add_to(m)
+)
+segmentacao.add_to(m)
 
 folium.GeoJson(
     camadas["caixas"],
@@ -207,11 +317,8 @@ folium.GeoJson(
                                fill=True, fill_color='#FF3B30', fill_opacity=1),
 ).add_to(m)
 
-if escolha == "Toda a fazenda":
-    m.fit_bounds([[s, w], [n, e]])
-else:
-    x0, y0, x1, y1 = talhoes[talhoes["Name"] == escolha].total_bounds
-    m.fit_bounds([[y0, x0], [y1, x1]])
+m.fit_bounds([[s, w], [n, e]])
+ControleCompeticao(segmentacao, competicao, raio=10).add_to(m)
 
 folium.LayerControl(position='topleft', collapsed=False).add_to(m)
 # Sem largura fixa: o mapa ocupa toda a largura da página.
