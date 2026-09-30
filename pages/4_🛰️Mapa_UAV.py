@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 import folium
+import numpy as np
 import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
@@ -48,8 +49,8 @@ hide_st_style = """
             header {visibility: hidden;}
             /* menos espaço no topo para o mapa caber na tela */
             .block-container {padding-top: 1.5rem; padding-bottom: 0.5rem;}
-            /* mapa com a altura da tela (descontando as métricas) */
-            iframe[data-testid="stIFrame"] {height: calc(100vh - 150px) !important; min-height: 450px;}
+            /* mapa com a altura da tela */
+            iframe[data-testid="stIFrame"] {height: calc(100vh - 90px) !important; min-height: 450px;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
@@ -83,6 +84,42 @@ def formatar(valor, casas=1):
     return f"{valor:,.{casas}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+CLASSES_DAP = list(range(5, 60, 5))
+
+
+def popupTalhao(nome, area_ha, sel):
+    """Resumo do talhão (aparece ao clicar): números + distribuição do DAP em classes de 5 cm."""
+    linhas = [("Área do talhão", f"{formatar(area_ha, 2)} ha")]
+    if len(sel):
+        linhas += [
+            ("Copas detectadas", formatar(len(sel), 0)),
+            ("Densidade", f"{formatar(len(sel) / area_ha, 0)} árv/ha"),
+            ("Área média de copa", f"{formatar(sel['area_m2'].mean())} m²"),
+            ("DAP médio estimado", f"{formatar(sel['dap_cm_est'].mean())} cm"),
+        ]
+    tabela = "".join(
+        f"<tr><td style='color:#5E6E64;padding:2px 14px 2px 0'>{a}</td>"
+        f"<td style='font-weight:600;text-align:right'>{b}</td></tr>" for a, b in linhas)
+    if len(sel):
+        cont, _ = np.histogram(sel["dap_cm_est"], bins=CLASSES_DAP)
+        usadas = np.flatnonzero(cont)
+        barras = "".join(
+            f"<div style='display:flex;align-items:center;gap:6px;margin:3px 0'>"
+            f"<span style='width:46px;text-align:right;color:#5E6E64'>{CLASSES_DAP[i]}–{CLASSES_DAP[i + 1]}</span>"
+            f"<span style='flex:1;background:#EEF3EF'><span style='display:block;height:12px;"
+            f"width:{100 * cont[i] / cont.max():.0f}%;background:#6B8F71'></span></span>"
+            f"<span style='width:28px;text-align:right'>{cont[i]}</span></div>"
+            for i in range(usadas[0], usadas[-1] + 1))
+        grafico = ("<div style='margin-top:10px;font-weight:600;color:#1F3D2B'>"
+                   f"Árvores por classe de DAP (cm)</div>{barras}")
+    else:
+        grafico = "<div style='margin-top:6px;color:#5E6E64'>Nenhuma copa de mogno detectada.</div>"
+    html = ("<div style='font-family:Arial,sans-serif;font-size:12px;width:250px'>"
+            f"<div style='font-size:15px;font-weight:700;color:#1F3D2B;margin-bottom:6px'>Talhão {nome}</div>"
+            f"<table>{tabela}</table>{grafico}</div>")
+    return folium.Popup(html, max_width=290)
+
+
 st.sidebar.markdown("## Mapa UAV")
 voo = st.sidebar.selectbox("Voo", list(VOOS))
 meta, camadas, copas = carregarVoo(str(VOOS[voo]))
@@ -91,13 +128,8 @@ talhoes = importarDados.carregarDadosSHP()
 talhoes = talhoes[talhoes.geometry.notna()].to_crs(epsg=4326)
 nomes = sorted(talhoes["Name"].dropna().unique(), key=ordemNatural)
 escolha = st.sidebar.selectbox("Talhão", ["Toda a fazenda"] + nomes)
-
-# Resumo da seleção
-sel = copas if escolha == "Toda a fazenda" else copas[copas["talhao"] == escolha]
-c1, c2, c3 = st.columns(3)
-c1.metric("Copas detectadas", formatar(len(sel), 0))
-c2.metric("Área média de copa", f"{formatar(sel['area_m2'].mean())} m²" if len(sel) else "–")
-c3.metric("DAP médio estimado", f"{formatar(sel['dap_cm_est'].mean())} cm" if len(sel) else "–")
+# área de cada talhão (soma das partes: T2 e T6 têm mais de um polígono)
+area_ha = talhoes.to_crs(talhoes.estimate_utm_crs()).geometry.area.groupby(talhoes["Name"]).sum() / 1e4
 
 # URL dos tiles: variável de ambiente (teste local) ou metadados do voo
 url_tiles = os.environ.get("CL_UAV_TILES_URL") or meta.get("url_tiles")
@@ -127,12 +159,27 @@ if url_tiles:
 else:
     st.warning("URL dos tiles da ortofoto não configurada (metadados.json → url_tiles).")
 
-folium.GeoJson(
-    talhoes[["Name", "geometry"]].to_json(),
-    name='Talhões',
-    style_function=lambda f: {'color': '#FFFFFF', 'weight': 2, 'fill': False},
-    tooltip=folium.GeoJsonTooltip(fields=['Name'], aliases=['Talhão:']),
-).add_to(m)
+# Talhões: clicar dentro do talhão (fora das copas) ou no nome abre o resumo.
+grupo_talhoes = folium.FeatureGroup(name='Talhões')
+for nome in nomes:
+    partes = talhoes[talhoes["Name"] == nome]
+    sel = copas[copas["talhao"] == nome]
+    folium.GeoJson(
+        partes[["Name", "geometry"]].to_json(),
+        style_function=lambda f: {'color': '#FFFFFF', 'weight': 2, 'fillOpacity': 0},
+        highlight_function=lambda f: {'weight': 3.5},
+        popup=popupTalhao(nome, area_ha[nome], sel),
+    ).add_to(grupo_talhoes)
+    ponto = partes.geometry.iloc[partes.to_crs(epsg=3857).area.argmax()].representative_point()
+    folium.Marker(
+        [ponto.y, ponto.x],
+        icon=folium.DivIcon(
+            icon_size=(60, 18), icon_anchor=(30, 9),
+            html=f"<div style='font:700 12px Arial,sans-serif;color:#fff;text-align:center;"
+                 f"text-shadow:0 0 3px #000,0 0 3px #000;cursor:pointer'>{nome}</div>"),
+        popup=popupTalhao(nome, area_ha[nome], sel),
+    ).add_to(grupo_talhoes)
+grupo_talhoes.add_to(m)
 
 folium.GeoJson(
     camadas["poligonos"],
