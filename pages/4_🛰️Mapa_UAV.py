@@ -7,7 +7,7 @@ from pathlib import Path
 import folium
 import pandas as pd
 import streamlit as st
-from streamlit_folium import folium_static
+import streamlit.components.v1 as components
 
 import adicionarLogo
 import importarDados
@@ -46,9 +46,15 @@ hide_st_style = """
             #MainMenu {visibility: hidden;}
             footer {visibility: hidden;}
             header {visibility: hidden;}
+            /* menos espaço no topo para o mapa caber na tela */
+            .block-container {padding-top: 1.5rem; padding-bottom: 0.5rem;}
+            /* mapa com a altura da tela (descontando as métricas) */
+            iframe[data-testid="stIFrame"] {height: calc(100vh - 150px) !important; min-height: 450px;}
             </style>
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
+
+ALTURA_MAPA = 850
 
 
 # Voos disponíveis: cada pasta tem metadados.json (URL dos tiles da ortofoto no
@@ -88,7 +94,6 @@ escolha = st.sidebar.selectbox("Talhão", ["Toda a fazenda"] + nomes)
 
 # Resumo da seleção
 sel = copas if escolha == "Toda a fazenda" else copas[copas["talhao"] == escolha]
-st.markdown(f"### Detecção de mogno africano · voo de {voo}")
 c1, c2, c3 = st.columns(3)
 c1.metric("Copas detectadas", formatar(len(sel), 0))
 c2.metric("Área média de copa", f"{formatar(sel['area_m2'].mean())} m²" if len(sel) else "–")
@@ -162,11 +167,5 @@ else:
     m.fit_bounds([[y0, x0], [y1, x1]])
 
 folium.LayerControl(position='topleft', collapsed=False).add_to(m)
-folium_static(m, width=1200, height=780)
-
-alom = meta.get("alometria", {})
-equacao = alom.get("equacao", "").replace(".", ",").replace(" * sqrt(A)", "·√A")
-st.caption(
-    f"Ortofoto de {voo} ({formatar(meta['resolucao_cm'])} cm/px). Copas segmentadas com RF-DETR Seg; "
-    f"DAP estimado pela área da copa A em m² ({equacao}, n = {alom.get('n', '')} árvores medidas)."
-)
+# Sem largura fixa: o mapa ocupa toda a largura da página.
+components.html(folium.Figure().add_child(m).render(), height=ALTURA_MAPA)
