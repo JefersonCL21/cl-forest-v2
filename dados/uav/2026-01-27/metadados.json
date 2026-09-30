@@ -1,0 +1,225 @@
+{
+ "deteccoes": "deteccoes_rfdetr_seg\\ortofoto_2026-01-27\\talhoes_delimitacao",
+ "n_copas": 1728,
+ "alometria": {
+  "equacao": "DAP = 3.511 + 3.3326 * sqrt(A)",
+  "n": 134
+ },
+ "talhoes": [
+  {
+   "talhao": "AP3",
+   "n_copas": 6,
+   "area_media_m2": 36.6,
+   "dap_medio_cm": 22.9
+  },
+  {
+   "talhao": "C1",
+   "n_copas": 3,
+   "area_media_m2": 43.5,
+   "dap_medio_cm": 25.1
+  },
+  {
+   "talhao": "C2a",
+   "n_copas": 1,
+   "area_media_m2": 17.5,
+   "dap_medio_cm": 17.5
+  },
+  {
+   "talhao": "C2b",
+   "n_copas": 8,
+   "area_media_m2": 68.2,
+   "dap_medio_cm": 30.2
+  },
+  {
+   "talhao": "C4",
+   "n_copas": 1,
+   "area_media_m2": 68.0,
+   "dap_medio_cm": 31.0
+  },
+  {
+   "talhao": "C5",
+   "n_copas": 8,
+   "area_media_m2": 36.7,
+   "dap_medio_cm": 23.2
+  },
+  {
+   "talhao": "Laranjal",
+   "n_copas": 38,
+   "area_media_m2": 64.7,
+   "dap_medio_cm": 29.7
+  },
+  {
+   "talhao": "Lieta",
+   "n_copas": 2,
+   "area_media_m2": 97.0,
+   "dap_medio_cm": 35.6
+  },
+  {
+   "talhao": "Pasto",
+   "n_copas": 17,
+   "area_media_m2": 52.7,
+   "dap_medio_cm": 27.3
+  },
+  {
+   "talhao": "T1",
+   "n_copas": 270,
+   "area_media_m2": 53.8,
+   "dap_medio_cm": 27.2
+  },
+  {
+   "talhao": "T10",
+   "n_copas": 89,
+   "area_media_m2": 41.6,
+   "dap_medio_cm": 24.5
+  },
+  {
+   "talhao": "T11",
+   "n_copas": 78,
+   "area_media_m2": 42.1,
+   "dap_medio_cm": 24.5
+  },
+  {
+   "talhao": "T12A",
+   "n_copas": 2,
+   "area_media_m2": 39.6,
+   "dap_medio_cm": 24.4
+  },
+  {
+   "talhao": "T13",
+   "n_copas": 23,
+   "area_media_m2": 31.6,
+   "dap_medio_cm": 21.7
+  },
+  {
+   "talhao": "T14B",
+   "n_copas": 11,
+   "area_media_m2": 32.4,
+   "dap_medio_cm": 22.0
+  },
+  {
+   "talhao": "T15",
+   "n_copas": 57,
+   "area_media_m2": 52.2,
+   "dap_medio_cm": 26.5
+  },
+  {
+   "talhao": "T16",
+   "n_copas": 125,
+   "area_media_m2": 53.0,
+   "dap_medio_cm": 27.1
+  },
+  {
+   "talhao": "T17A",
+   "n_copas": 10,
+   "area_media_m2": 80.3,
+   "dap_medio_cm": 32.4
+  },
+  {
+   "talhao": "T17B",
+   "n_copas": 57,
+   "area_media_m2": 41.8,
+   "dap_medio_cm": 24.7
+  },
+  {
+   "talhao": "T17C",
+   "n_copas": 26,
+   "area_media_m2": 73.8,
+   "dap_medio_cm": 31.5
+  },
+  {
+   "talhao": "T17D",
+   "n_copas": 9,
+   "area_media_m2": 30.3,
+   "dap_medio_cm": 21.2
+  },
+  {
+   "talhao": "T17E",
+   "n_copas": 4,
+   "area_media_m2": 49.4,
+   "dap_medio_cm": 26.1
+  },
+  {
+   "talhao": "T17F",
+   "n_copas": 1,
+   "area_media_m2": 55.9,
+   "dap_medio_cm": 28.4
+  },
+  {
+   "talhao": "T18",
+   "n_copas": 27,
+   "area_media_m2": 54.7,
+   "dap_medio_cm": 27.5
+  },
+  {
+   "talhao": "T2",
+   "n_copas": 177,
+   "area_media_m2": 48.8,
+   "dap_medio_cm": 26.2
+  },
+  {
+   "talhao": "T3",
+   "n_copas": 1,
+   "area_media_m2": 22.9,
+   "dap_medio_cm": 19.4
+  },
+  {
+   "talhao": "T4",
+   "n_copas": 7,
+   "area_media_m2": 31.2,
+   "dap_medio_cm": 21.7
+  },
+  {
+   "talhao": "T5",
+   "n_copas": 191,
+   "area_media_m2": 50.9,
+   "dap_medio_cm": 26.7
+  },
+  {
+   "talhao": "T6",
+   "n_copas": 170,
+   "area_media_m2": 53.9,
+   "dap_medio_cm": 27.5
+  },
+  {
+   "talhao": "T7A",
+   "n_copas": 100,
+   "area_media_m2": 54.7,
+   "dap_medio_cm": 27.2
+  },
+  {
+   "talhao": "T7B",
+   "n_copas": 13,
+   "area_media_m2": 39.6,
+   "dap_medio_cm": 23.3
+  },
+  {
+   "talhao": "T8",
+   "n_copas": 9,
+   "area_media_m2": 57.8,
+   "dap_medio_cm": 28.1
+  },
+  {
+   "talhao": "T9",
+   "n_copas": 187,
+   "area_media_m2": 41.0,
+   "dap_medio_cm": 24.2
+  }
+ ],
+ "data_voo": "2026-01-27",
+ "ortofoto": "Task-of-2026-01-27T171035637Z-orthophoto.tif",
+ "resolucao_cm": 3.09,
+ "limites_wgs84": [
+  -39.3157685,
+  -13.3393898,
+  -39.3027251,
+  -13.3222253
+ ],
+ "recorte": null,
+ "zoom_min": 14,
+ "zoom_max": 21,
+ "formato": "webp",
+ "n_tiles": 8007,
+ "megabytes": 137.0,
+ "url_tiles": "https://storage.googleapis.com/cl-forest-uav/uav/2026-01-27/{z}/{x}/{y}.webp",
+ "gerado_em": "2026-09-30T18:05:49"
+}
