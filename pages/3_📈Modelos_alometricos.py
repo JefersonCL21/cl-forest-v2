@@ -579,8 +579,12 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                 # Carrega os dados do arquivo
                 df = load_data_externo(file)
 
-                independent_var = st.sidebar.selectbox('Independent variable',list(df.columns))
-                dependent_var = st.sidebar.selectbox('Dependent variable',list(df.columns))
+                cols = list(df.columns)
+                # the census names them DAP and HT: start there, not on the first column (Talhao)
+                independent_var = st.sidebar.selectbox('Independent variable', cols,
+                                                       index=cols.index("DAP") if "DAP" in cols else 0)
+                dependent_var = st.sidebar.selectbox('Dependent variable', cols,
+                                                     index=cols.index("HT") if "HT" in cols else 0)
                 # Seleção de variável categórica (começa vazia)
                 categorica_col = st.sidebar.selectbox('Categorical column (opcional)', [" "] + list(df.columns))
 
@@ -597,7 +601,16 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                     x = df[independent_var]
                     y = df[dependent_var]
                     categorica_var = " "
-                
+
+                # curve_fit fails on any missing value, and most trees of the census have no measured height: fit on
+                # the trees with both values (as numbers), and estimate for every tree with the independent variable
+                x_all = pd.to_numeric(df[independent_var], errors="coerce")
+                y_all = pd.to_numeric(df[dependent_var], errors="coerce")
+                usable = x_all.notna() & y_all.notna() & (x_all > 0) & (y_all > 0)
+                x, y = x_all[usable], y_all[usable]
+                st.caption(f"Ajuste com {int(usable.sum())} árvores que têm {independent_var} e {dependent_var} "
+                           f"(de {len(df)} linhas).")
+
 
             def compare_models():
 
@@ -633,6 +646,9 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                 
                     results = {}
+                    if len(x) <= 4:
+                        st.warning(f"Poucas árvores com {independent_var} e {dependent_var} para ajustar.")
+                        return
                     for func_name in func_selected:
                         if func_name == "Logístico":
                             func = Logistico
@@ -649,15 +665,15 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
 
                         # Fit the model
                         try:
-                            popt, pcov = curve_fit(func, x, y, p0=p0)
-                        except:
-                            st.error("O modelo não ajustou. Deseja escolher outros chutes para os parâmetros iniciais?")
-
-
+                            popt, pcov = curve_fit(func, x, y, p0=p0, maxfev=5000)
+                        except (RuntimeError, ValueError, TypeError) as e:
+                            st.error(f"{func_name}: o modelo não ajustou ({e}). Tente outros chutes para os "
+                                     "parâmetros iniciais na barra lateral.")
+                            continue
 
                         #Calculate the R^2 and RMSE
                         y_pred = func(x, *popt)
-                        df[func_name] = y_pred   
+                        df[func_name] = func(x_all, *popt)  # estimated for every tree with the independent variable
                         
                         r2 = round(np.corrcoef(y, y_pred)[0,1]**2, 4)
                         rmse = round(np.sqrt(np.mean((y_pred-y)**2)), 4)
@@ -753,7 +769,6 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
                         output = io.BytesIO()
                         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
                             dataframe.to_excel(writer, index=True, sheet_name=sheet_name)
-                            writer.save()
 
                         # Reposiciona o ponteiro no início do buffer
                         output.seek(0)
