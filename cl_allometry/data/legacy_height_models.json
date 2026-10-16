@@ -1,0 +1,583 @@
+{
+ "source": "3_📈Modelos_alometricos.py",
+ "commit": "680c086",
+ "note": "Height models of cl-forest-v2 before cl_allometry: the coefficients of the page's functions (code) and of its export table (table), which disagree; HT_Est in dados/GERAL_V2.csv was computed outside the app.",
+ "code": {
+  "logistic": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 21.76844341,
+     "b1": 5.74124889,
+     "b2": 0.143963527
+    },
+    "line": 129
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 21.79732276,
+     "b1": 3.776144935,
+     "b2": 0.105154042
+    },
+    "line": 133
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 8.990513346,
+     "b1": 2.162877862,
+     "b2": 0.232040133
+    },
+    "line": 137
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 10.57467764,
+     "b1": 3.091923738,
+     "b2": 0.180739727
+    },
+    "line": 141
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 17.51162407,
+     "b1": 2.423401613,
+     "b2": 0.123758488
+    },
+    "line": 145
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 8.009336547,
+     "b1": 7.02216711,
+     "b2": 0.438732334
+    },
+    "line": 149
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 17.9521742,
+     "b1": 4.64531414,
+     "b2": 0.150851381
+    },
+    "line": 153
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 27.8741208,
+     "b1": 5.231677313,
+     "b2": 0.076901282
+    },
+    "line": 157
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 18.3080410062121,
+     "b1": 3.44946237547807,
+     "b2": 0.101525454147303
+    },
+    "line": 161
+   }
+  },
+  "gompertz": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 22.84499489,
+     "b1": 0.90572028,
+     "b2": 0.10073053
+    },
+    "line": 172
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 22.57496185,
+     "b1": 0.596504514,
+     "b2": 0.07332119
+    },
+    "line": 176
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 9.331061448,
+     "b1": 0.27528858,
+     "b2": 0.174241468
+    },
+    "line": 180
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 11.10535017,
+     "b1": 0.506875092,
+     "b2": 0.129479685
+    },
+    "line": 184
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 18.65171429,
+     "b1": 0.337405964,
+     "b2": 0.086086353
+    },
+    "line": 188
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 8.512413427,
+     "b1": 1.048987267,
+     "b2": 0.301346331
+    },
+    "line": 192
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 22.75351363,
+     "b1": 0.730806687,
+     "b2": 0.078943938
+    },
+    "line": 196
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 34.43775768,
+     "b1": 0.789669916,
+     "b2": 0.041422041
+    },
+    "line": 200
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 19.804027,
+     "b1": 0.5597384,
+     "b2": 0.067651954
+    },
+    "line": 204
+   }
+  },
+  "parabolic": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": -1.103468571,
+     "b1": 1.186903301,
+     "b2": -0.015690292
+    },
+    "line": 215
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 2.698653641,
+     "b1": 0.751169154,
+     "b2": -0.007409894
+    },
+    "line": 219
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 2.270905087,
+     "b1": 0.728168192,
+     "b2": -0.021388202
+    },
+    "line": 223
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 1.662469507,
+     "b1": 0.66026658,
+     "b2": -0.012371877
+    },
+    "line": 227
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 3.665754442,
+     "b1": 0.789337522,
+     "b2": -0.01237509
+    },
+    "line": 231
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": -1.975926648,
+     "b1": 1.673506602,
+     "b2": -0.074725336
+    },
+    "line": 235
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 2.238091246,
+     "b1": 0.682264265,
+     "b2": -0.002044374
+    },
+    "line": 239
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 2.368119239,
+     "b1": 0.571141995,
+     "b2": -0.001510177
+    },
+    "line": 243
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 2.483537519,
+     "b1": 0.629504792,
+     "b2": -0.006237206
+    },
+    "line": 247
+   }
+  },
+  "curtis": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 3.044098819,
+     "b1": -4.614315042
+    },
+    "line": 258
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 3.013555196,
+     "b1": -7.295961829
+    },
+    "line": 261
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 2.260295062,
+     "b1": -2.719103577
+    },
+    "line": 264
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 2.476019547,
+     "b1": -4.989873432
+    },
+    "line": 267
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 2.921989353,
+     "b1": -5.815057512
+    },
+    "line": 270
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 2.444400613,
+     "b1": -4.673091866
+    },
+    "line": 273
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 2.639323777,
+     "b1": -4.651464538
+    },
+    "line": 276
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 3.228512313,
+     "b1": -12.56345354
+    },
+    "line": 279
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 3.0096409,
+     "b1": -9.301165045
+    },
+    "line": 282
+   }
+  }
+ },
+ "table": {
+  "parabolic": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": -1.103468571,
+     "b1": 1.186903301,
+     "b2": 1.143588852
+    },
+    "line": 379
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 2.698653641,
+     "b1": 0.751169154,
+     "b2": 0.891053782
+    },
+    "line": 379
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 2.270905087,
+     "b1": 0.728168192,
+     "b2": 3.230319113
+    },
+    "line": 379
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 1.662469507,
+     "b1": 0.66026658,
+     "b2": 1.881754923
+    },
+    "line": 379
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 3.665754442,
+     "b1": 0.789337522,
+     "b2": 2.151041452
+    },
+    "line": 379
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": -1.975926648,
+     "b1": 1.673506602,
+     "b2": 5.262996542
+    },
+    "line": 379
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 2.238091246,
+     "b1": 0.682264265,
+     "b2": 0.801898567
+    },
+    "line": 379
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 2.368119239,
+     "b1": 0.571141995,
+     "b2": 1.058495846
+    },
+    "line": 379
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 2.483537519,
+     "b1": 0.629504792,
+     "b2": 1.480786358
+    },
+    "line": 379
+   }
+  },
+  "logistic": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 21.41571318,
+     "b1": 6.871833269,
+     "b2": 0.157175976
+    },
+    "line": 379
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 21.79732276,
+     "b1": 3.776144935,
+     "b2": 0.105154042
+    },
+    "line": 379
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 8.990513346,
+     "b1": 2.162877862,
+     "b2": 0.232040133
+    },
+    "line": 379
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 10.57467764,
+     "b1": 3.091923738,
+     "b2": 0.180739727
+    },
+    "line": 379
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 17.51162407,
+     "b1": 2.423401613,
+     "b2": 0.123758488
+    },
+    "line": 379
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 8.009336547,
+     "b1": 7.02216711,
+     "b2": 0.438732334
+    },
+    "line": 379
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 17.9521742,
+     "b1": 4.64531414,
+     "b2": 0.150851381
+    },
+    "line": 379
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 27.8741208,
+     "b1": 5.231677313,
+     "b2": 0.076901282
+    },
+    "line": 379
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 18.30804101,
+     "b1": 3.449462375,
+     "b2": 0.101525454
+    },
+    "line": 379
+   }
+  },
+  "gompertz": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 22.18278669,
+     "b1": 1.088884968,
+     "b2": 0.115312051
+    },
+    "line": 379
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 22.57496185,
+     "b1": 0.596504514,
+     "b2": 0.07332119
+    },
+    "line": 379
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 9.331061448,
+     "b1": 0.27528858,
+     "b2": 0.174241468
+    },
+    "line": 379
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 11.10535017,
+     "b1": 0.506875092,
+     "b2": 0.129479685
+    },
+    "line": 379
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 18.65171429,
+     "b1": 0.337405964,
+     "b2": 0.086086353
+    },
+    "line": 379
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 8.512413427,
+     "b1": 1.048987267,
+     "b2": 0.301346331
+    },
+    "line": 379
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 22.75351363,
+     "b1": 0.730806687,
+     "b2": 0.078943938
+    },
+    "line": 379
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 34.43775768,
+     "b1": 0.789669916,
+     "b2": 0.041422041
+    },
+    "line": 379
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 19.80402714,
+     "b1": 0.559738448,
+     "b2": 0.067651954
+    },
+    "line": 379
+   }
+  },
+  "curtis": {
+   "Khaya grandifoliola": {
+    "coefficients": {
+     "b0": 3.351592289,
+     "b1": -11.14719061
+    },
+    "line": 379
+   },
+   "Bowdichia virgilioides": {
+    "coefficients": {
+     "b0": 3.013555196,
+     "b1": -7.295961829
+    },
+    "line": 379
+   },
+   "Caesalpinia echinata": {
+    "coefficients": {
+     "b0": 2.260295062,
+     "b1": -2.719103577
+    },
+    "line": 379
+   },
+   "Cariniana legalis": {
+    "coefficients": {
+     "b0": 2.476019547,
+     "b1": -4.989873432
+    },
+    "line": 379
+   },
+   "Dalbergia nigra": {
+    "coefficients": {
+     "b0": 2.921989353,
+     "b1": -5.815057512
+    },
+    "line": 379
+   },
+   "Handroanthus chrysotrichus": {
+    "coefficients": {
+     "b0": 2.444400613,
+     "b1": -4.673091866
+    },
+    "line": 379
+   },
+   "Handroanthus serratifolius": {
+    "coefficients": {
+     "b0": 2.639323777,
+     "b1": -4.651464538
+    },
+    "line": 379
+   },
+   "Khaya ivorensis": {
+    "coefficients": {
+     "b0": 3.228512313,
+     "b1": -12.56345354
+    },
+    "line": 379
+   },
+   "Plathymenia reticulata": {
+    "coefficients": {
+     "b0": 3.0096409,
+     "b1": -9.301165045
+    },
+    "line": 379
+   }
+  }
+ }
+}

@@ -1,0 +1,5 @@
+# tests of cl_allometry, with the same numpy, scipy and pandas as requirements.txt
+numpy==1.23.5
+scipy==1.9.3
+pandas==1.5.3
+pytest
