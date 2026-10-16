@@ -68,6 +68,11 @@ _FORMS = [
     # height from DBH: dap_cm -> ht_m
     Form("height.curtis", "ht_m", "Curtis", "exp(b0 + b1/dap_cm)", ("dap_cm",), ("b0", "b1"),
          lambda x, y: _ols([_one(x["dap_cm"]), 1 / x["dap_cm"]], np.log(y), ("b0", "b1")), reference="Curtis (1967)"),
+    # the same curve fitted in logs, as the Curtis of cl-forest-v2 before the package was (its coefficients are the
+    # straight line of ln(HT) on 1/DAP)
+    Form("height.curtis_log", "ht_m", "Curtis (log)", "exp(b0 + b1/dap_cm)", ("dap_cm",), ("b0", "b1"),
+         lambda x, y: _ols([_one(x["dap_cm"]), 1 / x["dap_cm"]], np.log(y), ("b0", "b1")),
+         fit_text="b0 + b1/dap_cm", reference="Curtis (1967)"),
     Form("height.logistic", "ht_m", "Logístico", "b0/(1 + b1*exp(-b2*dap_cm))", ("dap_cm",), ("b0", "b1", "b2"),
          lambda x, y: {"b0": _asymptote(y), "b1": 5.0, "b2": 0.1}),
     Form("height.gompertz", "ht_m", "Gompertz", "b0*exp(-exp(b1 - b2*dap_cm))", ("dap_cm",), ("b0", "b1", "b2"),
