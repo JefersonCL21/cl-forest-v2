@@ -1,0 +1,9 @@
+# kept out of the image: environments, local data of the Model Lab, secrets and notes
+.git
+.venv
+.pytest_cache
+**/__pycache__
+.allometry-local
+.streamlit/secrets.toml
+notes
+tests

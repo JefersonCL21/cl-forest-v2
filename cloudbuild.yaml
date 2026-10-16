@@ -45,7 +45,16 @@ steps:
         '--tag=test',    # Tag para identificar como revisão de teste
         '--allow-unauthenticated',
         '--memory=2Gi',  # Configurar 2 GB de memória
-        '--cpu=2'        # Configurar 2 CPUs
+        '--cpu=2',       # Configurar 2 CPUs
+        # Laboratório de Modelos (ver docs/laboratorio-de-modelos.md): conta de serviço que só lê e cria no bucket,
+        # o bucket do registro e o commit de cada ajuste. Por enquanto sem o login Google (ALLOMETRY_WRITE=open: quem
+        # grava escreve o nome); para religar, trocar --clear-secrets por
+        # --update-secrets=/secrets/streamlit/secrets.toml=cl-biometrics-streamlit-secrets:latest e tirar o open
+        '--service-account=cl-biometrics-run@$PROJECT_ID.iam.gserviceaccount.com',
+        '--clear-secrets',
+        '--update-env-vars=ALLOMETRY_STORE=gs://$PROJECT_ID-allometry,ALLOMETRY_WRITE=open,GIT_COMMIT=$SHORT_SHA',
+        '--session-affinity',  # o login do Streamlit fica na memória da instância que o iniciou
+        '--timeout=3600'       # a conexão da página (websocket) não cai durante um ajuste longo
       ]
 
 # Registrar a imagem gerada no Artifact Registry

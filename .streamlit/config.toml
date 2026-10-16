@@ -14,3 +14,8 @@ maxUploadSize = 200
 
 [browser]
 gatherUsageStats = false
+
+[secrets]
+# On Cloud Run the secret cl-biometrics-streamlit-secrets is mounted at /secrets/streamlit (a file mounted
+# into .streamlit/ would hide this config); locally, .streamlit/secrets.toml. A missing file is skipped.
+files = ["/secrets/streamlit/secrets.toml", ".streamlit/secrets.toml"]

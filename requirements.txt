@@ -21,3 +21,7 @@ openpyxl
 mpld3
 scikit-learn==1.2.2
 xlsxwriter
+# Model Lab (cl_allometry): Parquet, the register's bucket and Streamlit's Google login
+pyarrow==21.0.0
+google-cloud-storage==2.19.0
+Authlib==1.9.1

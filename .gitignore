@@ -4,3 +4,4 @@ build-and-run.sh
 __pycache__/
 *.pyc
 .allometry-local/
+.streamlit/secrets.toml
