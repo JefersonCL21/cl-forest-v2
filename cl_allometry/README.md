@@ -65,6 +65,33 @@ fits/<alvo>/<sha12 dos dados>/<spec16>.json             um ajuste
 promotions/<alvo>/<escopo>/000001.json                  as promoções e aposentadorias, só acrescentadas
 ```
 
+## Escolher, aplicar e exportar
+
+```python
+from cl_allometry import selection, export
+from cl_allometry.apply import apply, predict_one
+
+ranked = selection.rank(reg.list_fits("ht_m", m.sha256))   # mesma versão e mesmas linhas
+rec = selection.recommend(ranked, incumbent=campea_atual)  # rec.fit_id, rec.reasons, rec.warnings
+
+out = apply(df, "ht_m", reg)    # ht_m_est, ht_m_final, ht_m_source, ht_m_model_id, ht_m_out_of_range
+predict_one(reg, "ht_m", "Khaya ivorensis", dap_cm=25)
+
+export.model_card(record, champion)        # JSON para outros sistemas
+export.to_sql("height.logistic", coefs)    # a mesma fórmula em BigQuery ou Postgres
+```
+
+- **Seleção** (`selection.py`): cada estatística dá um posto no seu sentido e os postos são somados com pesos
+  (padrão: RMSE% da validação cruzada ×2, |viés%| da validação cruzada, R² ajustado e AIC). Só se comparam
+  candidatos do mesmo alvo, dos mesmos dados e das mesmas linhas. Num empate (até 0,5 ponto de RMSE%), ganha o de
+  menos parâmetros, depois a campeã em uso. A recomendação diz o porquê e os avisos; quem decide é uma pessoa.
+- **Aplicação** (`apply.py`): a altura medida tem prioridade; só se estima o que falta. Cada valor diz de onde
+  veio (`measured`, `species`, `genus`, `generic` ou `none`) e qual ajuste o fez; fora da faixa do ajuste é
+  marcado, nunca cortado. Encadeia: o volume pode usar a `ht_m_final` da altura.
+- **Exportação** (`export.py`): o model card em JSON tem a fórmula, os coeficientes, as unidades, a faixa, as
+  estatísticas e a origem dos dados; o SQL sai da mesma fórmula do ajuste e dá o mesmo valor do Python (testado
+  em todas as formas).
+
 ## Os modelos de antes (`legacy.py`) e a versão 1
 Os 9 modelos de altura da página `3_📈Modelos_alometricos.py` foram migrados como estavam, lidos do código-fonte
 (sem redigitar) para `data/legacy_height_models.json`: os coeficientes das funções (`code`) e os da tabela exportada
