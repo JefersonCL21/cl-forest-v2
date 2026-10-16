@@ -1,10 +1,12 @@
 """Login for the Model Lab with Streamlit's own Google login (st.login, st.experimental_user in Streamlit 1.44).
 Only writing needs it: who imports, fits or promotes is recorded by e-mail. The rules are in policy.py.
 
-Configuration, in this order: environment variables (ALLOMETRY_STORE, ALLOMETRY_PROMOTERS), then secrets.toml:
+Configuration, in this order: environment variables (ALLOMETRY_STORE, ALLOMETRY_PROMOTERS, ALLOMETRY_WRITE), then
+secrets.toml:
     [auth]          redirect_uri, cookie_secret, client_id, client_secret, server_metadata_url
-    [allometry]     store = "gs://...", allowed_domain = "courageousland.com", promoters = ["..."]
+    [allometry]     store = "gs://...", allowed_domain = "courageousland.com", promoters = ["..."], write = "open"
 Without any of it, running locally, the store is the folder .allometry-local and the page writes as dev@local.
+With ALLOMETRY_WRITE=open and no [auth], anyone writes under the name they type in the sidebar.
 """
 
 from __future__ import annotations
@@ -43,7 +45,8 @@ def settings() -> Settings:
     on_cloud_run = bool(os.environ.get("K_SERVICE"))
     store = os.environ.get("ALLOMETRY_STORE") or lab.get("store") or (None if on_cloud_run else str(LOCAL_STORE))
     auth = secrets.get("auth") or {}
-    return Settings(store_uri=store, mode=write_mode(bool(auth), store, on_cloud_run),
+    open_writes = (os.environ.get("ALLOMETRY_WRITE") or lab.get("write")) == "open"
+    return Settings(store_uri=store, mode=write_mode(bool(auth), store, on_cloud_run, open_writes),
                     redirect_uri=auth.get("redirect_uri"), domain=lab.get("allowed_domain", DEFAULT_DOMAIN),
                     promoters=promoters(lab.get("promoters"), os.environ.get("ALLOMETRY_PROMOTERS")))
 
@@ -61,6 +64,9 @@ def identity(s: Settings) -> Identity | None:
     """The person who may write now, or None."""
     if s.mode == "dev":
         return Identity(os.environ.get("ALLOMETRY_DEV_USER", "dev@local"), "modo local", "dev")
+    if s.mode == "open":
+        name = str(st.session_state.get("lab_author") or "").strip()
+        return Identity(name, name, "open") if len(name) >= 3 else None
     if s.mode != "google":
         return None
     claims = _claims()
@@ -73,6 +79,9 @@ def account_box(s: Settings, who: Identity | None) -> None:
     with st.sidebar:
         if s.mode == "dev":
             st.caption(f"🧪 Modo local · gravando como **{who.email}** em `{s.store_uri}`")
+        elif s.mode == "open":
+            st.text_input("Seu nome ou e-mail", key="lab_author", placeholder="ex.: ana@courageousland.com",
+                          help="Fica registrado como autor do que você importar, ajustar ou promover.")
         elif s.mode == "read_only":
             st.caption("🔒 Somente leitura")
         elif _claims():
@@ -90,6 +99,8 @@ def writer_gate(s: Settings, who: Identity | None, what: str, key: str) -> bool:
         return True
     if s.mode == "read_only":
         st.info(f"Somente leitura neste ambiente: não é possível {what}.")
+    elif s.mode == "open":
+        st.info(f"Para {what}, escreva seu nome ou e-mail na barra lateral: ele fica registrado no que você gravar.")
     elif not host_matches(s.redirect_uri, _host()):
         st.info(f"Para {what}, use o endereço principal do app: {main_address(s.redirect_uri)}")
     elif _claims():

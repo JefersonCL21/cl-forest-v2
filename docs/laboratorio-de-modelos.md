@@ -11,6 +11,22 @@ e com quais dados. Por trás dela está o pacote [`cl_allometry`](../cl_allometr
 | Modelos | Mostra o modelo em uso por alvo e espécie e o histórico; permite voltar a um modelo anterior e baixar o model card e o SQL | consultar: todos; voltar e aposentar: promotores |
 | Aplicar | Estima uma árvore ou uma planilha inteira, dizendo de onde veio cada valor | todos |
 
+## Por enquanto, sem login
+O login Google está desligado. Com `ALLOMETRY_WRITE=open`, quem vai importar, ajustar ou promover escreve o nome ou
+o e-mail na barra lateral, e esse nome fica registrado como autor.
+
+- **Quem pode gravar:** qualquer pessoa com o link.
+- **O que continua protegido:** nada é sobrescrito nem apagado, só acrescentado. Uma promoção errada se desfaz com
+  "Voltar para este", na aba Modelos.
+
+**Por que o login está desligado:** com o Authlib 1.9.1, o login do Streamlit 1.44 falha. Ao clicar em entrar, aparece
+`400: 'NoneType' object does not support item assignment`. A biblioteca grava o estado do login de um jeito que a
+integração do Streamlit 1.44 não suporta.
+
+**Para religar:**
+1. Fixe um Authlib da mesma época do Streamlit 1.44 (por exemplo, 1.5.x) e confirme o login na revisão `lab`.
+2. No `cloudbuild.yaml`, volte a montar o secret (o comentário no passo de deploy diz como) e tire o `open`.
+
 ## Rodar no computador (modo local)
 Sem login e sem bucket, a página grava na pasta `.allometry-local/`, que fica fora do git, como `dev@local`.
 

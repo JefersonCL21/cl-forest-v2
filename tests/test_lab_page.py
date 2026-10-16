@@ -54,3 +54,33 @@ def test_applying_from_the_page_estimates_and_offers_the_file(page):
     assert not at.exception and not at.error
     assert any(b.label.startswith("Baixar com as estimativas") for b in at.get("download_button"))
     assert [m.label for m in at.metric] == ["altura total (m)"]  # the one-tree calculator
+
+
+def test_a_group_with_a_fit_that_did_not_converge_is_shown(page):
+    """The ranking table mixes counts of warnings and "não convergiu": it is still one type per column."""
+    at, reg = page
+    data, m = __import__("cl_allometry").datasets.load(reg.store, "inventario@v1")
+    failed = reg.run_fit(data, m, "height.curtis", Filter(especie=("Khaya ivorensis",)), author=WHO,
+                         weights="1/(dap_cm-dap_cm)")
+    assert not failed.fit.converged
+    at.run()
+    assert not at.exception and not at.error
+
+
+def test_with_the_login_off_writing_needs_a_name_and_records_it(tmp_path, monkeypatch):
+    reg, data, m = lab(tmp_path)
+    monkeypatch.setenv("ALLOMETRY_STORE", str(reg.store.root))
+    monkeypatch.setenv("ALLOMETRY_WRITE", "open")
+    monkeypatch.setenv("K_SERVICE", "cl-biometrics")  # as on Cloud Run
+    monkeypatch.chdir(Path(__file__).parents[1])
+    at = AppTest.from_file(PAGE, default_timeout=120)
+    at.run()
+    assert not at.exception
+    assert not [b for b in at.button if b.key == "fit_go"]  # no fitting before saying who you are
+    at.text_input(key="lab_author").input("Ana Souza").run()
+    at.multiselect(key="fit_species").set_value(["Dalbergia nigra"])
+    at.multiselect(key="fit_forms").set_value(["height.logistic"])
+    at.run()
+    at.button(key="fit_go").click().run()
+    assert not at.exception and not at.error
+    assert [r.author for r in reg.list_fits("ht_m")] == ["Ana Souza"]

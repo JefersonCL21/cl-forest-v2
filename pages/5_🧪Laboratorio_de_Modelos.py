@@ -283,7 +283,8 @@ def tab_compare() -> None:
         "Em uso": ["★" if f == incumbent else "" for f in ranked["fit_id"]],
         "RMSE% (VC)": ranked["cv_rmse_pct"], "|Viés%| (VC)": ranked["cv_abs_bias_pct"], "R² aj.": ranked["r2_adj"],
         "AIC": ranked["aic"], "n": ranked["n"], "Parâmetros": ranked["params"],
-        "Avisos": [len(S.warnings_for(row)) if row["converged"] else "não convergiu" for _, row in ranked.iterrows()],
+        "Avisos": [str(len(S.warnings_for(row))) if row["converged"] else "não convergiu"  # one type per column
+                   for _, row in ranked.iterrows()],
     })
     st.dataframe(view, hide_index=True, use_container_width=True, column_config={
         "Posição": st.column_config.NumberColumn(format="%d"),
@@ -312,7 +313,8 @@ def tab_compare() -> None:
     fit_details(by_id[detail], rows)
 
     if WHO is None:
-        st.caption("Para promover um modelo, entre com sua conta (aba Dados ou barra lateral).")
+        st.caption("Para promover um modelo, identifique-se na barra lateral." if CFG.mode == "open"
+                   else "Para promover um modelo, entre com sua conta (aba Dados ou barra lateral).")
     elif not auth.may_promote(CFG, WHO):
         st.caption("Só quem está na lista de promotores pode promover um modelo.")
     elif converged and st.button("Promover um modelo…", type="primary", key="cmp_promote"):

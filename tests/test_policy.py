@@ -32,19 +32,22 @@ def test_promoters_come_from_the_secrets_and_the_environment_whatever_the_case()
     assert not can_promote(Identity("ana@courageousland.com", "Ana", "google"), allowed)
     assert not can_promote(None, allowed)
     assert can_promote(Identity("dev@local", "dev", "dev"), frozenset())  # a local run is its owner's
+    assert can_promote(Identity("Ana", "Ana", "open"), frozenset())  # login off: whoever says who they are
 
 
-@pytest.mark.parametrize("auth,store,cloud_run,mode", [
-    (True, "gs://bucket", True, "google"),
-    (True, ".allometry-local", False, "google"),
-    (False, ".allometry-local", False, "dev"),
-    (False, "gs://bucket", False, "read_only"),  # a real bucket is never written without a login
-    (False, "gs://bucket", True, "read_only"),
-    (False, "/tmp/store", True, "read_only"),  # Cloud Run without auth: nobody writes
-    (True, None, True, "read_only"),
+@pytest.mark.parametrize("auth,store,cloud_run,open_writes,mode", [
+    (True, "gs://bucket", True, False, "google"),
+    (True, ".allometry-local", False, False, "google"),
+    (False, ".allometry-local", False, False, "dev"),
+    (False, "gs://bucket", False, False, "read_only"),  # a real bucket is never written without a login...
+    (False, "gs://bucket", True, False, "read_only"),
+    (False, "/tmp/store", True, False, "read_only"),  # Cloud Run without auth: nobody writes
+    (False, "gs://bucket", True, True, "open"),  # ...unless open writing is turned on, on purpose
+    (True, "gs://bucket", True, True, "google"),  # a configured login always wins
+    (False, None, True, True, "read_only"),
 ])
-def test_the_mode_of_the_page(auth, store, cloud_run, mode):
-    assert write_mode(auth, store, cloud_run) == mode
+def test_the_mode_of_the_page(auth, store, cloud_run, open_writes, mode):
+    assert write_mode(auth, store, cloud_run, open_writes) == mode
 
 
 def test_login_only_works_on_the_address_of_the_redirect():

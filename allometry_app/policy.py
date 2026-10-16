@@ -4,6 +4,8 @@ to be in the list of promoters.
 
 Modes of the page:
 - google: [auth] is configured; a person logs in with Google;
+- open: turned on explicitly (ALLOMETRY_WRITE=open), while the Google login is off: anyone with the link writes,
+  under the name or e-mail they type, which is recorded as the author (records are still never overwritten);
 - dev: running locally, with no auth and a local store; the author is ALLOMETRY_DEV_USER (default dev@local);
 - read_only: anything else (on Cloud Run without auth, or a bucket without auth): nobody writes.
 """
@@ -21,7 +23,7 @@ DEFAULT_DOMAIN = "courageousland.com"
 class Identity:
     email: str
     name: str
-    mode: str  # "google" or "dev"
+    mode: str  # "google", "open" or "dev"
 
 
 def domain_allowed(claims: Mapping, domain: str = DEFAULT_DOMAIN) -> bool:
@@ -42,14 +44,16 @@ def promoters(listed: Iterable[str] | None = None, env: str | None = None) -> fr
 def can_promote(identity: Identity | None, allowed: frozenset[str]) -> bool:
     if identity is None:
         return False
-    return identity.mode == "dev" or identity.email.strip().lower() in allowed
+    return identity.mode in ("dev", "open") or identity.email.strip().lower() in allowed
 
 
-def write_mode(auth_configured: bool, store_uri: str | None, on_cloud_run: bool) -> str:
+def write_mode(auth_configured: bool, store_uri: str | None, on_cloud_run: bool, open_writes: bool = False) -> str:
     if not store_uri:
         return "read_only"
     if auth_configured:
         return "google"
+    if open_writes:
+        return "open"
     if not on_cloud_run and not store_uri.startswith("gs://"):
         return "dev"
     return "read_only"
