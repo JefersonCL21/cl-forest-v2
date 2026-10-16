@@ -520,10 +520,12 @@ def tab_apply() -> None:
                 st.warning("Diga o que é cada coluna: ao menos a espécie e o DAP (ou o CAP).")
                 return
             try:
-                df = D.canonicalize(raw, mapping)[0]
+                df, invalid = D.canonicalize(raw, mapping)
             except ValueError as e:
                 st.error(str(e))
                 return
+            # the same quality rules as an import: an implausible measured value is not kept over the estimate
+            df = pd.concat([df, D.quality_flags(df, invalid)], axis=1)
             base = name.rsplit(".", 1)[0]
         else:
             m = widgets.dataset_picker(URI, "apply")
