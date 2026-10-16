@@ -553,8 +553,6 @@ elif modelos == 'Ajustar modelos' and selectbox == "Hipsométricos":
         col1, col2, col3 = st.columns([1,4,1])
         with col2:
 
-            st.set_option('deprecation.showfileUploaderEncoding', False)
-
             def Logistico(x, b0, b1, b2):
                 y = b0/(1 + b1*np.exp(-b2*x))
                 return y
