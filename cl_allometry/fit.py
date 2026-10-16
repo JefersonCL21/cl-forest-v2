@@ -24,6 +24,11 @@ from cl_allometry import metrics as M
 from cl_allometry.expr import Formula
 from cl_allometry.forms import Form, form as form_by_key
 
+# Evaluations allowed from each starting point. On the 9 species × 9 height forms of the inventory, the fits that
+# converge took at most 1,075; a start that has not converged by 2,000 is not going to, and letting it run to 20,000
+# made one hopeless Richards on 16 trees take 80 s.
+MAX_NFEV = 2000
+
 
 @dataclass
 class Fit:
@@ -70,9 +75,11 @@ def _prepare(f: Form, data: pd.DataFrame) -> tuple[dict[str, np.ndarray], np.nda
     return x, cols[f.target].to_numpy(float)[ok], int((~ok).sum())
 
 
-def fit(form: Form | str, data: pd.DataFrame, weights: str | None = None, starts: int = 8, seed: int = 0) -> Fit:
+def fit(form: Form | str, data: pd.DataFrame, weights: str | None = None, starts: int = 8, seed: int = 0,
+        start: dict[str, float] | None = None) -> Fit:
     """Fits `form` to `data`. weights: a formula over the form's variables (e.g. "1/dap_cm**2") for residuals whose
-    spread grows with the tree; starts: how many starting points (the form's own, then random around it)."""
+    spread grows with the tree; starts: how many starting points (the form's own, or `start` if given, then random
+    around it)."""
     f = form_by_key(form) if isinstance(form, str) else form
     x, y, dropped = _prepare(f, data)
     n, p = len(y), len(f.params)
@@ -91,14 +98,14 @@ def fit(form: Form | str, data: pd.DataFrame, weights: str | None = None, starts
         r = (model(**x, **dict(zip(f.params, b))) - target) * w
         return np.where(np.isfinite(r), r, 1e6)  # outside the form's domain: a large residual, not a crash
 
-    first = f.start(x, y)
+    first = start or f.start(x, y)
     x0 = np.array([first.get(k, 1.0) for k in f.params], dtype=float)
     rng = np.random.default_rng(seed)
     candidates = [x0] + [x0 * np.exp(rng.normal(0, 0.6, p)) for _ in range(max(starts, 1) - 1)]
     best = None
     for c in candidates:
         try:
-            r = least_squares(residuals, c, method="trf", x_scale="jac", max_nfev=20000)
+            r = least_squares(residuals, c, method="trf", x_scale="jac", max_nfev=MAX_NFEV)
         except (ValueError, FloatingPointError):
             continue
         if r.success and np.isfinite(r.cost) and (best is None or r.cost < best.cost):
@@ -139,17 +146,27 @@ def fit(form: Form | str, data: pd.DataFrame, weights: str | None = None, starts
     )
 
 
-def cross_validate(form: Form | str, data: pd.DataFrame, k: int = 5, seed: int = 0, weights: str | None = None) -> dict:
-    """Out-of-fold statistics: each tree predicted by a fit that did not see it (k folds, shuffled with `seed`)."""
+def cross_validate(form: Form | str, data: pd.DataFrame, k: int = 5, seed: int = 0, weights: str | None = None,
+                   start: dict[str, float] | None = None) -> dict:
+    """Out-of-fold statistics: each tree predicted by a fit that did not see it (k folds, shuffled with `seed`).
+
+    Each fold's fit starts from `start` (by default, the coefficients of the fit on all the data): its result is
+    still the minimum on the fold's own trees, found in a few steps instead of from every starting point again,
+    which made a cross-validation take minutes. Only if that fails are the usual starting points tried."""
     f = form_by_key(form) if isinstance(form, str) else form
     x, y, _ = _prepare(f, data)
     n = len(y)
     order = np.random.default_rng(seed).permutation(n)
     pred = np.full(n, np.nan)
     frame = pd.DataFrame({**x, f.target: y})
+    if start is None:
+        whole = fit(f, frame, weights=weights, seed=seed)
+        start = whole.coefficients
     for fold in np.array_split(order, k):
         train = frame.drop(index=fold)
-        fitted = fit(f, train, weights=weights, seed=seed)
+        fitted = fit(f, train, weights=weights, seed=seed, starts=1, start=start) if start else None
+        if fitted is None or not fitted.converged:
+            fitted = fit(f, train, weights=weights, seed=seed)
         if not fitted.converged:
             return {"k": k, "seed": seed, "converged": False, "message": fitted.message}
         pred[fold] = fitted.predict(**{v: x[v][fold] for v in f.variables})

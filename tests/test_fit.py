@@ -26,6 +26,7 @@ def synthetic(key, coef, noise=0.03, seed=1):
 
 TRUE = [
     ("height.curtis", {"b0": 3.4, "b1": -12.5}),
+    ("height.curtis_log", {"b0": 3.4, "b1": -12.5}),
     ("height.logistic", {"b0": 21.4, "b1": 6.87, "b2": 0.157}),
     ("height.gompertz", {"b0": 22.2, "b1": 1.09, "b2": 0.115}),
     ("height.parabolic", {"b0": -1.1, "b1": 1.19, "b2": -0.0157}),

@@ -34,6 +34,7 @@ def test_every_form_reads_and_names_its_target():
 # each form against the same expression worked out by hand
 CASES = [
     ("height.curtis", {"dap_cm": 25}, {"b0": 3.0, "b1": -5.0}, math.exp(3 - 5 / 25)),
+    ("height.curtis_log", {"dap_cm": 25}, {"b0": 3.0, "b1": -5.0}, math.exp(3 - 5 / 25)),
     ("height.logistic", {"dap_cm": 20}, {"b0": 20, "b1": 5, "b2": 0.1}, 20 / (1 + 5 * math.exp(-2))),
     ("height.gompertz", {"dap_cm": 20}, {"b0": 22, "b1": 1, "b2": 0.1}, 22 * math.exp(-math.exp(1 - 2))),
     ("height.parabolic", {"dap_cm": 20}, {"b0": -1, "b1": 1.2, "b2": -0.016}, -1 + 24 - 0.016 * 400),
