@@ -8,12 +8,13 @@ their statistics, so their coefficients are always the ones fitted and can be us
     from cl_allometry import Registry, open_store
     reg = Registry(open_store("gs://bucket"))
     reg.resolve("ht_m", "Khaya grandifoliola").predict(dap_cm=25)   # the champion of the species
+    champion("ht_m", "Khaya grandifoliola", store="gs://bucket")      # the same, in one line
 """
 
 from cl_allometry.fit import Fit, cross_validate, fit
 from cl_allometry.forms import FORMS, TARGETS, Form, form, forms_for
-from cl_allometry.registry import Filter, Registry, Scope
+from cl_allometry.registry import Filter, Registry, Scope, champion
 from cl_allometry.store import open_store
 
-__all__ = ["FORMS", "TARGETS", "Filter", "Fit", "Form", "Registry", "Scope", "cross_validate", "fit", "form",
-           "forms_for", "open_store"]
+__all__ = ["FORMS", "TARGETS", "Filter", "Fit", "Form", "Registry", "Scope", "champion", "cross_validate", "fit",
+           "form", "forms_for", "open_store"]

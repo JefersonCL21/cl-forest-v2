@@ -421,3 +421,12 @@ class Registry:
         def lookup(especie: str | None) -> Champion | None:
             return next((table[str(s)] for s in Scope.chain(especie) if str(s) in table), None)
         return lookup
+
+
+def champion(target: str, especie: str | None, store: str | None = None) -> Champion | None:
+    """The model in use for a tree of `especie`, from the store at `store` (default: ALLOMETRY_STORE).
+
+        champion("ht_m", "Khaya grandifoliola").predict(dap_cm=25)
+    """
+    reg = Registry(open_store(store)) if store else Registry.from_env()
+    return reg.resolve(target, especie)
